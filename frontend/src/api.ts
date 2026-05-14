@@ -1,0 +1,65 @@
+import type {
+  CreateIntakePayload,
+  CreateMedicationPayload,
+  IntakeDetail,
+  IntakeListItem,
+  MedicationEntry,
+  MedicationSignal,
+  ReviewQueueItem,
+  ReviewStatus
+} from "./types";
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5108";
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers
+    },
+    ...options
+  });
+
+  if (!response.ok) {
+    const fallback = `Request failed with ${response.status}`;
+    const body = await response.json().catch(() => ({ error: fallback }));
+    const validationDetails = Array.isArray(body.errors)
+      ? body.errors.map((error: { field: string; message: string }) => `${error.field}: ${error.message}`).join(" ")
+      : null;
+
+    throw new Error(validationDetails ?? body.message ?? body.error ?? fallback);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+export const api = {
+  listIntakes: () => request<IntakeListItem[]>("/api/intakes"),
+  getIntake: (id: number) => request<IntakeDetail>(`/api/intakes/${id}`),
+  createIntake: (payload: CreateIntakePayload) =>
+    request<IntakeDetail>("/api/intakes", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  generateSummary: (id: number) =>
+    request<IntakeDetail>(`/api/intakes/${id}/generate-summary`, {
+      method: "POST"
+    }),
+  addMedication: (id: number, payload: CreateMedicationPayload) =>
+    request<MedicationEntry>(`/api/intakes/${id}/medications`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  listMedications: (id: number) => request<MedicationEntry[]>(`/api/intakes/${id}/medications`),
+  analyseMedicationContext: (id: number) =>
+    request<IntakeDetail>(`/api/intakes/${id}/analyse-medication-context`, {
+      method: "POST"
+    }),
+  listMedicationSignals: (id: number) => request<MedicationSignal[]>(`/api/intakes/${id}/medication-signals`),
+  listReviewQueue: () => request<ReviewQueueItem[]>("/api/review-queue"),
+  updateReviewStatus: (id: number, reviewStatus: ReviewStatus, actor = "demo-reviewer") =>
+    request<IntakeDetail>(`/api/intakes/${id}/review-status`, {
+      method: "PATCH",
+      body: JSON.stringify({ reviewStatus, actor })
+    })
+};

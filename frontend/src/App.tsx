@@ -1,0 +1,746 @@
+import { FormEvent, useEffect, useMemo, useState, type ReactNode } from "react";
+import { api } from "./api";
+import type {
+  CreateIntakePayload,
+  CreateMedicationPayload,
+  IntakeDetail,
+  IntakeListItem,
+  MedicationCategory,
+  MedicationEntry,
+  MedicationSource,
+  MedicationSignal,
+  ReviewQueueItem,
+  RiskSeverity
+} from "./types";
+
+type Route =
+  | { name: "dashboard" }
+  | { name: "create" }
+  | { name: "queue" }
+  | { name: "detail"; id: number };
+
+const initialForm: CreateIntakePayload = {
+  patientAlias: "",
+  age: 10,
+  source: "family phone note",
+  intakeText: "",
+  createdBy: "demo-user"
+};
+
+const initialMedicationForm: MedicationFormState = {
+  medicationName: "",
+  category: "Current",
+  dose: "",
+  route: "",
+  frequency: "",
+  startedAt: "",
+  stoppedAt: "",
+  reasonForUse: "",
+  source: "Unknown",
+  prescribedBy: "",
+  notes: ""
+};
+
+type MedicationFormState = {
+  medicationName: string;
+  category: MedicationCategory;
+  dose: string;
+  route: string;
+  frequency: string;
+  startedAt: string;
+  stoppedAt: string;
+  reasonForUse: string;
+  source: MedicationSource;
+  prescribedBy: string;
+  notes: string;
+};
+
+function parseRoute(): Route {
+  const hash = window.location.hash.replace(/^#\/?/, "");
+  const [first, second] = hash.split("/");
+
+  if (first === "create") {
+    return { name: "create" };
+  }
+
+  if (first === "queue") {
+    return { name: "queue" };
+  }
+
+  if (first === "intakes" && Number(second)) {
+    return { name: "detail", id: Number(second) };
+  }
+
+  return { name: "dashboard" };
+}
+
+function navigate(path: string) {
+  window.location.hash = path;
+}
+
+export default function App() {
+  const [route, setRoute] = useState<Route>(parseRoute());
+
+  useEffect(() => {
+    const handleHashChange = () => setRoute(parseRoute());
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div>
+          <p className="eyebrow">Clinical AI workflow demo</p>
+          <h1>Intake Review</h1>
+        </div>
+        <nav aria-label="Primary navigation">
+          <button className={route.name === "dashboard" ? "active" : ""} onClick={() => navigate("/")}>
+            Dashboard
+          </button>
+          <button className={route.name === "create" ? "active" : ""} onClick={() => navigate("/create")}>
+            Create Intake
+          </button>
+          <button className={route.name === "queue" ? "active" : ""} onClick={() => navigate("/queue")}>
+            Review Queue
+          </button>
+        </nav>
+      </aside>
+
+      <main className="content">
+        {route.name === "dashboard" && <Dashboard />}
+        {route.name === "create" && <CreateIntake />}
+        {route.name === "queue" && <ReviewQueue />}
+        {route.name === "detail" && <IntakeDetailPage intakeId={route.id} />}
+      </main>
+    </div>
+  );
+}
+
+function Dashboard() {
+  const [intakes, setIntakes] = useState<IntakeListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .listIntakes()
+      .then(setIntakes)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const counts = useMemo(
+    () => ({
+      newCount: intakes.filter((intake) => intake.reviewStatus === "New").length,
+      needsReview: intakes.filter((intake) => intake.reviewStatus === "NeedsReview").length,
+      reviewed: intakes.filter((intake) => intake.reviewStatus === "Reviewed").length
+    }),
+    [intakes]
+  );
+
+  return (
+    <section className="page-section">
+      <PageHeader
+        title="Dashboard"
+        subtitle="A lightweight view of intake volume and human review state."
+        action={<button onClick={() => navigate("/create")}>New intake</button>}
+      />
+      <StatusMessage loading={loading} error={error} />
+      <div className="metric-grid">
+        <Metric label="New intakes" value={counts.newCount} />
+        <Metric label="Needs review" value={counts.needsReview} tone="amber" />
+        <Metric label="Reviewed" value={counts.reviewed} tone="green" />
+      </div>
+      <div className="panel">
+        <h2>Recent intakes</h2>
+        <IntakeTable intakes={intakes.slice(0, 8)} />
+      </div>
+    </section>
+  );
+}
+
+function CreateIntake() {
+  const [form, setForm] = useState<CreateIntakePayload>(initialForm);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setError(null);
+
+    try {
+      const intake = await api.createIntake(form);
+      navigate(`/intakes/${intake.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to create intake");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="page-section">
+      <PageHeader title="Create Intake" subtitle="Record a fictional intake note for mock AI workflow support." />
+      {error && <p className="alert">{error}</p>}
+      <form className="form-panel" onSubmit={handleSubmit}>
+        <div className="form-grid">
+          <label>
+            Patient alias
+            <input
+              required
+              value={form.patientAlias}
+              onChange={(event) => setForm({ ...form, patientAlias: event.target.value })}
+              placeholder="Patient A"
+            />
+          </label>
+          <label>
+            Age
+            <input
+              required
+              type="number"
+              min={0}
+              max={120}
+              value={form.age}
+              onChange={(event) => setForm({ ...form, age: Number(event.target.value) })}
+            />
+          </label>
+          <label>
+            Source
+            <input
+              required
+              value={form.source}
+              onChange={(event) => setForm({ ...form, source: event.target.value })}
+            />
+          </label>
+          <label>
+            Created by
+            <input
+              required
+              value={form.createdBy}
+              onChange={(event) => setForm({ ...form, createdBy: event.target.value })}
+            />
+          </label>
+        </div>
+        <label>
+          Intake text
+          <textarea
+            required
+            rows={10}
+            value={form.intakeText}
+            onChange={(event) => setForm({ ...form, intakeText: event.target.value })}
+            placeholder="Family reports sleep problems, school difficulty and attention concerns..."
+          />
+        </label>
+        <div className="form-actions">
+          <button type="submit" disabled={saving}>
+            {saving ? "Saving..." : "Create intake"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function ReviewQueue() {
+  const [items, setItems] = useState<ReviewQueueItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .listReviewQueue()
+      .then(setItems)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <section className="page-section">
+      <PageHeader title="Review Queue" subtitle="Cases routed for human attention by risk flags or low confidence." />
+      <StatusMessage loading={loading} error={error} />
+      <div className="panel">
+        {items.length === 0 && !loading ? (
+          <p className="empty">No intakes are currently marked as needing review.</p>
+        ) : (
+          <div className="queue-list">
+            {items.map((item) => (
+              <button className="queue-item" key={item.id} onClick={() => navigate(`/intakes/${item.id}`)}>
+                <span>
+                  <strong>{item.patientAlias}</strong>
+                  <small>
+                    Age {item.age} · {item.source} · {formatDate(item.createdAt)}
+                  </small>
+                </span>
+                <SeverityBadge severity={item.highestRiskSeverity} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function IntakeDetailPage({ intakeId }: { intakeId: number }) {
+  const [intake, setIntake] = useState<IntakeDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    api
+      .getIntake(intakeId)
+      .then(setIntake)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [intakeId]);
+
+  async function runAction(action: () => Promise<IntakeDetail>) {
+    setBusy(true);
+    setError(null);
+    try {
+      setIntake(await action());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Action failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (loading) {
+    return <StatusMessage loading={loading} error={error} />;
+  }
+
+  if (!intake) {
+    return <p className="alert">Intake not found.</p>;
+  }
+
+  return (
+    <section className="page-section">
+      <PageHeader
+        title={intake.patientAlias}
+        subtitle={`Age ${intake.age} · ${intake.source} · created ${formatDate(intake.createdAt)}`}
+        action={<StatusBadge status={intake.reviewStatus} />}
+      />
+      {error && <p className="alert">{error}</p>}
+
+      <div className="toolbar">
+        <button disabled={busy} onClick={() => runAction(() => api.generateSummary(intake.id))}>
+          {intake.aiSummary ? "Regenerate summary" : "Generate summary"}
+        </button>
+        <button
+          className="secondary"
+          disabled={busy || intake.reviewStatus === "Reviewed"}
+          onClick={() => runAction(() => api.updateReviewStatus(intake.id, "Reviewed"))}
+        >
+          Mark reviewed
+        </button>
+      </div>
+
+      <div className="detail-grid">
+        <article className="panel">
+          <h2>Original Intake</h2>
+          <p className="note-text">{intake.intakeText}</p>
+        </article>
+
+        <article className="panel">
+          <h2>AI-Style Summary</h2>
+          {intake.aiSummary ? (
+            <div className="summary-list">
+              <SummaryRow title="Presenting concerns" body={intake.aiSummary.presentingConcerns} />
+              <SummaryRow title="Relevant history" body={intake.aiSummary.relevantHistory} />
+              <SummaryRow title="Possible risks" body={intake.aiSummary.possibleRisks} />
+              <SummaryRow title="Recommended next step" body={intake.aiSummary.recommendedNextStep} />
+              <SummaryRow title="Confidence score" body={`${Math.round(intake.aiSummary.confidenceScore * 100)}%`} />
+              <p className="disclaimer">{intake.aiSummary.disclaimer}</p>
+            </div>
+          ) : (
+            <p className="empty">No summary generated yet.</p>
+          )}
+        </article>
+      </div>
+
+      <MedicationContextSection intake={intake} busy={busy} runAction={runAction} />
+
+      <div className="detail-grid">
+        <article className="panel">
+          <h2>Risk Flags</h2>
+          {intake.riskFlags.length === 0 ? (
+            <p className="empty">No configured risk keywords detected.</p>
+          ) : (
+            <div className="flag-list">
+              {intake.riskFlags.map((flag) => (
+                <div className="flag-item" key={flag.id}>
+                  <SeverityBadge severity={flag.severity} />
+                  <div>
+                    <strong>{flag.label}</strong>
+                    <p>{flag.reason}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </article>
+
+        <article className="panel">
+          <h2>Audit Log</h2>
+          <div className="timeline">
+            {intake.auditLogs.map((log) => (
+              <div className="timeline-item" key={log.id}>
+                <strong>{log.action}</strong>
+                <small>
+                  {log.actor} · {formatDate(log.timestamp)}
+                </small>
+                <p>{log.details}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function MedicationContextSection({
+  intake,
+  busy,
+  runAction
+}: {
+  intake: IntakeDetail;
+  busy: boolean;
+  runAction: (action: () => Promise<IntakeDetail>) => Promise<void>;
+}) {
+  const [form, setForm] = useState<MedicationFormState>(initialMedicationForm);
+
+  async function handleMedicationSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await runAction(async () => {
+      await api.addMedication(intake.id, toMedicationPayload(form));
+      return api.getIntake(intake.id);
+    });
+    setForm(initialMedicationForm);
+  }
+
+  return (
+    <section className="panel medication-context">
+      <div className="section-heading">
+        <div>
+          <h2>Medication Context</h2>
+          <p>Medication signals are workflow support only and must be reviewed by a clinician or pharmacist.</p>
+        </div>
+        <button disabled={busy} onClick={() => runAction(() => api.analyseMedicationContext(intake.id))}>
+          Analyse medication context
+        </button>
+      </div>
+
+      <form className="medication-form" onSubmit={handleMedicationSubmit}>
+        <div className="form-grid">
+          <label>
+            Medication name
+            <input
+              required
+              value={form.medicationName}
+              onChange={(event) => setForm({ ...form, medicationName: event.target.value })}
+              placeholder="Ibuprofen"
+            />
+          </label>
+          <label>
+            Category
+            <select
+              value={form.category}
+              onChange={(event) => setForm({ ...form, category: event.target.value as MedicationCategory })}
+            >
+              <option value="Current">Current</option>
+              <option value="Recent">Recent</option>
+              <option value="Past">Past</option>
+              <option value="OTC">OTC</option>
+              <option value="FamilyHousehold">Family/Household</option>
+            </select>
+          </label>
+          <label>
+            Dose
+            <input value={form.dose} onChange={(event) => setForm({ ...form, dose: event.target.value })} />
+          </label>
+          <label>
+            Frequency
+            <input
+              value={form.frequency}
+              onChange={(event) => setForm({ ...form, frequency: event.target.value })}
+              placeholder="e.g. twice daily"
+            />
+          </label>
+          <label>
+            Route
+            <input value={form.route} onChange={(event) => setForm({ ...form, route: event.target.value })} />
+          </label>
+          <label>
+            Source
+            <select
+              value={form.source}
+              onChange={(event) => setForm({ ...form, source: event.target.value as MedicationSource })}
+            >
+              <option value="PatientReported">Patient reported</option>
+              <option value="FamilyReported">Family reported</option>
+              <option value="ClinicianReported">Clinician reported</option>
+              <option value="Unknown">Unknown</option>
+            </select>
+          </label>
+          <label>
+            Started
+            <input
+              type="date"
+              value={form.startedAt}
+              onChange={(event) => setForm({ ...form, startedAt: event.target.value })}
+            />
+          </label>
+          <label>
+            Stopped
+            <input
+              type="date"
+              value={form.stoppedAt}
+              onChange={(event) => setForm({ ...form, stoppedAt: event.target.value })}
+            />
+          </label>
+          <label>
+            Reason for use
+            <input
+              value={form.reasonForUse}
+              onChange={(event) => setForm({ ...form, reasonForUse: event.target.value })}
+            />
+          </label>
+          <label>
+            Prescribed by
+            <input value={form.prescribedBy} onChange={(event) => setForm({ ...form, prescribedBy: event.target.value })} />
+          </label>
+        </div>
+        <label>
+          Notes
+          <textarea
+            rows={3}
+            value={form.notes}
+            onChange={(event) => setForm({ ...form, notes: event.target.value })}
+            placeholder="Allergy, side effect, OTC context, household medication, uncertainty..."
+          />
+        </label>
+        <div className="form-actions">
+          <button type="submit" disabled={busy}>
+            Add medication
+          </button>
+        </div>
+      </form>
+
+      <div className="detail-grid">
+        <MedicationTimeline medications={intake.medicationEntries} />
+        <MedicationSignals signals={intake.medicationSignals} />
+      </div>
+    </section>
+  );
+}
+
+function MedicationTimeline({ medications }: { medications: MedicationEntry[] }) {
+  return (
+    <article className="subpanel">
+      <h3>Medication Timeline</h3>
+      {medications.length === 0 ? (
+        <p className="empty">No medication context recorded yet.</p>
+      ) : (
+        <div className="medication-list">
+          {medications.map((medication) => (
+            <div className="medication-item" key={medication.id}>
+              <div className="medication-title">
+                <strong>{medication.medicationName}</strong>
+                <span>{formatMedicationCategory(medication.category)}</span>
+              </div>
+              <small>
+                {formatMedicationTiming(medication)} · {formatMedicationSource(medication.source)}
+              </small>
+              <p>
+                {[medication.dose, medication.frequency, medication.route].filter(Boolean).join(" · ") ||
+                  "Dose/frequency not documented"}
+              </p>
+              {medication.reasonForUse && <p>Reason: {medication.reasonForUse}</p>}
+              {medication.notes && <p>Notes: {medication.notes}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </article>
+  );
+}
+
+function MedicationSignals({ signals }: { signals: MedicationSignal[] }) {
+  return (
+    <article className="subpanel">
+      <h3>Medication Signals</h3>
+      {signals.length === 0 ? (
+        <p className="empty">No medication review signals generated yet.</p>
+      ) : (
+        <div className="flag-list">
+          {signals.map((signal) => (
+            <div className="flag-item" key={signal.id}>
+              <SeverityBadge severity={signal.severity} />
+              <div>
+                <strong>{signal.label}</strong>
+                <p>{signal.rationale}</p>
+                <p className="review-question">Question: {signal.reviewerQuestion}</p>
+                <small>Workflow support only · {formatDate(signal.createdAt)}</small>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </article>
+  );
+}
+
+function PageHeader({
+  title,
+  subtitle,
+  action
+}: {
+  title: string;
+  subtitle: string;
+  action?: ReactNode;
+}) {
+  return (
+    <header className="page-header">
+      <div>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
+      </div>
+      {action}
+    </header>
+  );
+}
+
+function StatusMessage({ loading, error }: { loading: boolean; error: string | null }) {
+  if (loading) {
+    return <p className="muted">Loading...</p>;
+  }
+
+  if (error) {
+    return <p className="alert">{error}</p>;
+  }
+
+  return null;
+}
+
+function Metric({ label, value, tone }: { label: string; value: number; tone?: "amber" | "green" }) {
+  return (
+    <div className={`metric ${tone ?? ""}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function IntakeTable({ intakes }: { intakes: IntakeListItem[] }) {
+  if (intakes.length === 0) {
+    return <p className="empty">No intakes yet. Create one to start the workflow.</p>;
+  }
+
+  return (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Status</th>
+            <th>Risk</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {intakes.map((intake) => (
+            <tr key={intake.id} onClick={() => navigate(`/intakes/${intake.id}`)}>
+              <td>
+                <strong>{intake.patientAlias}</strong>
+                <small>Age {intake.age}</small>
+              </td>
+              <td>
+                <StatusBadge status={intake.reviewStatus} />
+              </td>
+              <td>{intake.highestRiskSeverity ? <SeverityBadge severity={intake.highestRiskSeverity} /> : "None"}</td>
+              <td>{formatDate(intake.createdAt)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SummaryRow({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="summary-row">
+      <strong>{title}</strong>
+      <p>{body}</p>
+    </div>
+  );
+}
+
+function toMedicationPayload(form: MedicationFormState): CreateMedicationPayload {
+  const clean = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  };
+
+  return {
+    medicationName: form.medicationName.trim(),
+    category: form.category,
+    dose: clean(form.dose),
+    route: clean(form.route),
+    frequency: clean(form.frequency),
+    startedAt: clean(form.startedAt),
+    stoppedAt: clean(form.stoppedAt),
+    reasonForUse: clean(form.reasonForUse),
+    source: form.source,
+    prescribedBy: clean(form.prescribedBy),
+    notes: clean(form.notes)
+  };
+}
+
+function StatusBadge({ status }: { status: string }) {
+  return <span className={`status status-${status.toLowerCase()}`}>{status}</span>;
+}
+
+function SeverityBadge({ severity }: { severity: RiskSeverity }) {
+  return <span className={`severity severity-${severity.toLowerCase()}`}>{severity}</span>;
+}
+
+function formatMedicationCategory(category: MedicationCategory) {
+  return category === "FamilyHousehold" ? "Family/Household" : category;
+}
+
+function formatMedicationSource(source: MedicationSource) {
+  const labels: Record<MedicationSource, string> = {
+    PatientReported: "Patient reported",
+    FamilyReported: "Family reported",
+    ClinicianReported: "Clinician reported",
+    Unknown: "Unknown source"
+  };
+
+  return labels[source];
+}
+
+function formatMedicationTiming(medication: MedicationEntry) {
+  const started = medication.startedAt ? formatDateOnly(medication.startedAt) : "start unknown";
+  const stopped = medication.stoppedAt ? formatDateOnly(medication.stoppedAt) : "not stopped";
+  return `${started} to ${stopped}`;
+}
+
+function formatDateOnly(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium"
+  }).format(new Date(value));
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(new Date(value));
+}

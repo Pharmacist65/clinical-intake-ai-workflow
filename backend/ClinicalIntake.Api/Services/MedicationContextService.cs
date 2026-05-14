@@ -1,0 +1,212 @@
+using System.Text.RegularExpressions;
+using ClinicalIntake.Api.Models;
+
+namespace ClinicalIntake.Api.Services;
+
+public sealed class MedicationContextService
+{
+    private static readonly string[] NsaidTerms =
+    [
+        "ibuprofen",
+        "nurofen",
+        "naproxen",
+        "nsaid"
+    ];
+
+    private static readonly string[] SafetyContextTerms =
+    [
+        "asthma",
+        "kidney",
+        "liver",
+        "stomach ulcer",
+        "bleeding",
+        "anticoagulant",
+        "warfarin",
+        "apixaban",
+        "rivaroxaban",
+        "steroid"
+    ];
+
+    private static readonly string[] AdverseReactionTerms =
+    [
+        "allergy",
+        "rash",
+        "swelling",
+        "breathing difficulty",
+        "reaction",
+        "side effect"
+    ];
+
+    public IReadOnlyList<MedicationSignal> Analyse(Intake intake)
+    {
+        var now = DateTime.UtcNow;
+        var signals = new List<MedicationSignal>();
+        var nsaidEntries = intake.MedicationEntries
+            .Where(medication => ContainsAny(medication.MedicationName, NsaidTerms))
+            .ToList();
+
+        foreach (var medication in nsaidEntries)
+        {
+            signals.Add(CreateSignal(
+                intake.Id,
+                medication.Id,
+                "OTC NSAID context",
+                RiskSeverity.Medium,
+                "Medication name includes an NSAID/OTC NSAID term. This is a workflow support signal only.",
+                "Confirm dose, duration, reason for use, and whether a pharmacist/clinician review is needed.",
+                now));
+        }
+
+        AddMedicationSafetySignalIfNeeded(intake, nsaidEntries, signals, now);
+        AddIncompleteHistorySignals(intake, signals, now);
+        AddPolypharmacySignalIfNeeded(intake, signals, now);
+        AddHouseholdMedicationSignals(intake, signals, now);
+        AddAdverseReactionSignals(intake, signals, now);
+
+        return signals;
+    }
+
+    private static void AddMedicationSafetySignalIfNeeded(
+        Intake intake,
+        IReadOnlyList<MedicationEntry> nsaidEntries,
+        ICollection<MedicationSignal> signals,
+        DateTime now)
+    {
+        var nsaidMentioned = nsaidEntries.Count > 0 || ContainsAny(intake.IntakeText, NsaidTerms);
+        if (!nsaidMentioned)
+        {
+            return;
+        }
+
+        var contextText = string.Join(
+            " ",
+            intake.IntakeText,
+            string.Join(" ", intake.MedicationEntries.Select(medication => medication.Notes ?? string.Empty)));
+
+        if (!ContainsAny(contextText, SafetyContextTerms))
+        {
+            return;
+        }
+
+        signals.Add(CreateSignal(
+            intake.Id,
+            nsaidEntries.FirstOrDefault()?.Id,
+            "Medication safety review signal",
+            RiskSeverity.High,
+            "NSAID context appears alongside medical or medication-history terms that should be clarified by a qualified professional. This does not infer causality.",
+            "Review NSAID context and relevant medical/medication history with a qualified clinician or pharmacist.",
+            now));
+    }
+
+    private static void AddIncompleteHistorySignals(
+        Intake intake,
+        ICollection<MedicationSignal> signals,
+        DateTime now)
+    {
+        foreach (var medication in intake.MedicationEntries
+            .Where(medication => medication.Category is MedicationCategory.Current or MedicationCategory.Recent)
+            .Where(medication => string.IsNullOrWhiteSpace(medication.Dose) || string.IsNullOrWhiteSpace(medication.Frequency)))
+        {
+            signals.Add(CreateSignal(
+                intake.Id,
+                medication.Id,
+                "Incomplete medication history",
+                RiskSeverity.Low,
+                "A current or recent medication is missing dose or frequency documentation.",
+                "Clarify dose, frequency, timing, and whether the medication is current or historical.",
+                now));
+        }
+    }
+
+    private static void AddPolypharmacySignalIfNeeded(
+        Intake intake,
+        ICollection<MedicationSignal> signals,
+        DateTime now)
+    {
+        var currentMedicationCount = intake.MedicationEntries.Count(medication => medication.Category == MedicationCategory.Current);
+        if (currentMedicationCount < 5)
+        {
+            return;
+        }
+
+        signals.Add(CreateSignal(
+            intake.Id,
+            null,
+            "Polypharmacy context",
+            RiskSeverity.Medium,
+            "Five or more current medications are documented. This is a documentation and review signal only.",
+            "Consider pharmacist review of current medication list and documentation quality.",
+            now));
+    }
+
+    private static void AddHouseholdMedicationSignals(
+        Intake intake,
+        ICollection<MedicationSignal> signals,
+        DateTime now)
+    {
+        if (intake.Age >= 18)
+        {
+            return;
+        }
+
+        foreach (var medication in intake.MedicationEntries
+            .Where(medication => medication.Category == MedicationCategory.FamilyHousehold))
+        {
+            signals.Add(CreateSignal(
+                intake.Id,
+                medication.Id,
+                "Household medication context",
+                RiskSeverity.Low,
+                "Medication is documented as family or household context for a child intake.",
+                "Clarify whether the medication belongs to the patient, caregiver, or household only.",
+                now));
+        }
+    }
+
+    private static void AddAdverseReactionSignals(
+        Intake intake,
+        ICollection<MedicationSignal> signals,
+        DateTime now)
+    {
+        foreach (var medication in intake.MedicationEntries
+            .Where(medication => ContainsAny(medication.Notes ?? string.Empty, AdverseReactionTerms)))
+        {
+            signals.Add(CreateSignal(
+                intake.Id,
+                medication.Id,
+                "Possible adverse reaction history",
+                RiskSeverity.High,
+                "Medication notes include allergy, reaction, or possible adverse-effect language that should be clarified. This does not diagnose an allergy.",
+                "Clarify allergy/adverse reaction history and ensure clinician/pharmacist review.",
+                now));
+        }
+    }
+
+    private static MedicationSignal CreateSignal(
+        int intakeId,
+        int? medicationEntryId,
+        string label,
+        RiskSeverity severity,
+        string rationale,
+        string reviewerQuestion,
+        DateTime createdAt) =>
+        new()
+        {
+            IntakeId = intakeId,
+            MedicationEntryId = medicationEntryId,
+            Label = label,
+            Severity = severity,
+            Rationale = rationale,
+            ReviewerQuestion = reviewerQuestion,
+            CreatedAt = createdAt
+        };
+
+    private static bool ContainsAny(string text, IEnumerable<string> terms) =>
+        terms.Any(term => ContainsTerm(text, term));
+
+    private static bool ContainsTerm(string text, string term)
+    {
+        var pattern = $@"\b{Regex.Escape(term)}\b";
+        return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    }
+}
