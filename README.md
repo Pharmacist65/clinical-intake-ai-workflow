@@ -1,5 +1,7 @@
 # Clinical Intake AI Workflow
 
+[![CI](https://github.com/Pharmacist65/clinical-intake-ai-workflow/actions/workflows/ci.yml/badge.svg)](https://github.com/Pharmacist65/clinical-intake-ai-workflow/actions/workflows/ci.yml)
+
 A small full-stack healthtech application that models a safe clinical intake workflow: capturing fictional intake notes, generating deterministic AI-style workflow summaries, flagging possible priority terms, routing cases for human review, and preserving an audit trail.
 
 The project is intentionally scoped as a small MVP for exploring safe clinical workflow automation. It does not diagnose, prescribe, triage autonomously, or replace clinicians. It uses mock AI logic so the workflow can run locally without API keys, real patient data, or hidden model behaviour.
@@ -61,6 +63,7 @@ Add screenshots here after running the app locally:
 - Tests: xUnit
 - Frontend: React, TypeScript, Vite
 - AI mode: deterministic mock service, no real API key required
+- CI: GitHub Actions runs backend tests and frontend build on push and pull request
 
 ## Architecture Overview
 
