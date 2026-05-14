@@ -48,12 +48,19 @@ The app lets a care team user:
 
 ## Screenshots
 
-Add screenshots here after running the app locally:
+The screenshots below use fictional demo data only.
 
-- Dashboard
-- Create Intake
-- Intake Detail
-- Review Queue
+### Dashboard
+
+![Dashboard showing intake counts and recent fictional intakes](docs/screenshots/dashboard.png)
+
+### Intake Detail
+
+![Intake detail showing the original note, AI-style summary, medication context, review signals and audit log](docs/screenshots/intake-detail.png)
+
+### Review Queue
+
+![Review queue showing a fictional case routed for human review](docs/screenshots/review-queue.png)
 
 ## Tech Stack
 
