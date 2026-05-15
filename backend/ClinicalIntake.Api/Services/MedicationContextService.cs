@@ -10,7 +10,8 @@ public sealed class MedicationContextService
         "ibuprofen",
         "nurofen",
         "naproxen",
-        "nsaid"
+        "nsaid",
+        "nsaids"
     ];
 
     private static readonly string[] SafetyContextTerms =
@@ -72,7 +73,9 @@ public sealed class MedicationContextService
         ICollection<MedicationSignal> signals,
         DateTime now)
     {
-        var nsaidMentioned = nsaidEntries.Count > 0 || ContainsAny(intake.IntakeText, NsaidTerms);
+        var nsaidContextEntry = nsaidEntries.FirstOrDefault()
+            ?? intake.MedicationEntries.FirstOrDefault(medication => ContainsAny(medication.Notes ?? string.Empty, NsaidTerms));
+        var nsaidMentioned = nsaidContextEntry is not null || ContainsAny(intake.IntakeText, NsaidTerms);
         if (!nsaidMentioned)
         {
             return;
@@ -90,7 +93,7 @@ public sealed class MedicationContextService
 
         signals.Add(CreateSignal(
             intake.Id,
-            nsaidEntries.FirstOrDefault()?.Id,
+            nsaidContextEntry?.Id,
             "Medication safety review signal",
             RiskSeverity.High,
             "NSAID context appears alongside medical or medication-history terms that should be clarified by a qualified professional. This does not infer causality.",

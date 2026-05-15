@@ -230,6 +230,29 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyseMedicationContext_WithNsaidMentionInNotes_CreatesHighSeveritySignal()
+    {
+        var intake = await _workflow.CreateIntakeAsync(DefaultRequest());
+        var medication = await _workflow.AddMedicationAsync(
+            intake.Id,
+            MedicationRequest(
+                "Pain relief tablet",
+                category: "OTC",
+                dose: "unknown",
+                frequency: "unknown",
+                notes: "Family reports NSAID use and asthma history."));
+
+        var updated = await _workflow.AnalyseMedicationContextAsync(intake.Id, "test");
+
+        Assert.NotNull(updated);
+        Assert.NotNull(medication);
+        Assert.Contains(updated.MedicationSignals, signal =>
+            signal.MedicationEntryId == medication.Id
+            && signal.Label == "Medication safety review signal"
+            && signal.Severity == RiskSeverity.High);
+    }
+
+    [Fact]
     public async Task AnalyseMedicationContext_WithIncompleteCurrentMedication_CreatesIncompleteHistorySignal()
     {
         var intake = await _workflow.CreateIntakeAsync(DefaultRequest());

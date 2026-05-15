@@ -154,7 +154,7 @@ Unexpected failures return `500 Internal Server Error` with the same simple erro
 | `GET` | `/api/health` | `200 OK` | Basic API health check |
 | `POST` | `/api/intakes` | `201 Created` | Create a new fictional intake |
 | `GET` | `/api/intakes` | `200 OK` | List intakes with status and highest risk |
-| `GET` | `/api/intakes/{id}` | `200 OK` | Get one intake with summary, flags, and audit logs |
+| `GET` | `/api/intakes/{id}` | `200 OK` | Get one intake with summary, flags, medication context, signals, and audit logs |
 | `POST` | `/api/intakes/{id}/generate-summary` | `200 OK` | Generate or regenerate deterministic AI-style summary |
 | `GET` | `/api/review-queue` | `200 OK` | List intakes currently marked `NeedsReview` |
 | `PATCH` | `/api/intakes/{id}/review-status` | `200 OK` | Update review status and create audit log entry |
@@ -261,7 +261,7 @@ Medication sources:
 
 `POST /api/intakes/{id}/analyse-medication-context`
 
-This endpoint runs deterministic medication-history rules and creates review signals. It does not perform clinical decision support or real drug-interaction checking.
+This endpoint runs deterministic medication-history rules and creates review signals. NSAID context can come from the medication name, intake text, or medication notes. It does not perform clinical decision support or real drug-interaction checking.
 
 Examples of generated signals:
 
