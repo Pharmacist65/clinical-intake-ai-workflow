@@ -92,6 +92,8 @@ The backend keeps HTTP handling thin. Request validation lives in small validato
 
 The Pharmacy Context Layer adds medication-history capture and pharmacist-review context to the intake workflow. It is intended to surface information that can be missed during intake, especially OTC medicines, incomplete dose/frequency details, household medication context, and possible adverse reaction history.
 
+NSAID handling is included as one concrete OTC medication-context example, not as the centre of the system. The pharmacy layer is broader than NSAID detection: it is designed around medication-history completeness, documentation quality, adverse-reaction prompts, household medication context, polypharmacy context, and routing relevant questions to pharmacist/clinician review.
+
 Medication outputs are framed only as workflow support signals and reviewer questions. The system does not diagnose, prescribe, recommend treatment, infer causality, or perform real drug-interaction checking.
 
 This feature does not perform medication reconciliation, drug interaction checking, clinical decision support, prescribing advice, or diagnosis. It only captures medication context and creates review prompts for qualified human review.
@@ -261,7 +263,7 @@ Medication sources:
 
 `POST /api/intakes/{id}/analyse-medication-context`
 
-This endpoint runs deterministic medication-history rules and creates review signals. NSAID context can come from the medication name, intake text, or medication notes. It does not perform clinical decision support or real drug-interaction checking.
+This endpoint runs deterministic medication-history rules and creates review signals. NSAID context can come from the medication name, intake text, or medication notes, but NSAID handling is only one example rule within a wider medication-context workflow. It does not perform clinical decision support or real drug-interaction checking.
 
 Examples of generated signals:
 

@@ -18,6 +18,8 @@ Over-the-counter medicines can be clinically relevant because they may be used w
 
 This project includes simple NSAID-related review signals because medicines such as ibuprofen, Nurofen, naproxen, and NSAIDs are common examples where dose, duration, reason for use, and surrounding history can matter.
 
+NSAID handling is included as one concrete OTC medication-context example, not as the centre of the system. The wider pharmacy layer is designed around medication-history completeness, documentation quality, adverse-reaction prompts, household medication context, polypharmacy context, and routing relevant questions to pharmacist/clinician review.
+
 The system does not decide whether use is appropriate or unsafe. It only creates review questions.
 
 ## What The System Does

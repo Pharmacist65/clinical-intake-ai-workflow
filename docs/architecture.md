@@ -57,7 +57,9 @@ This keeps the project runnable without API keys and makes tests stable.
 
 ### Pharmacy Context Layer
 
-`MedicationContextService` is deterministic. It scans medication entries and intake context for review signals such as OTC NSAID context, incomplete medication history, household medication context, polypharmacy context and possible adverse reaction history.
+`MedicationContextService` is deterministic. It scans medication entries and intake context for review signals such as incomplete medication history, household medication context, polypharmacy context, possible adverse reaction history and OTC NSAID context.
+
+NSAID handling is one concrete OTC medication-context example, not the centre of the design. The layer is broader: it models how medication-history documentation gaps and review questions can be captured and routed to pharmacist/clinician review without making clinical decisions.
 
 This is not a prescribing tool, diagnosis tool, autonomous triage system or real drug-interaction engine. It only creates workflow support signals and reviewer questions.
 
