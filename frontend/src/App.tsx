@@ -288,9 +288,11 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reviewNote, setReviewNote] = useState("");
 
   useEffect(() => {
     setLoading(true);
+    setReviewNote("");
     api
       .getIntake(intakeId)
       .then(setIntake)
@@ -308,6 +310,11 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function markReviewed() {
+    await runAction(() => api.updateReviewStatus(intakeId, "Reviewed", reviewNote));
+    setReviewNote("");
   }
 
   if (loading) {
@@ -334,11 +341,27 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
         <button
           className="secondary"
           disabled={busy || intake.reviewStatus === "Reviewed"}
-          onClick={() => runAction(() => api.updateReviewStatus(intake.id, "Reviewed"))}
+          onClick={markReviewed}
         >
           Mark reviewed
         </button>
       </div>
+
+      {intake.reviewStatus !== "Reviewed" && (
+        <div className="review-note-panel">
+          <label>
+            Reviewer note
+            <textarea
+              rows={2}
+              maxLength={1000}
+              value={reviewNote}
+              onChange={(event) => setReviewNote(event.target.value)}
+              placeholder="Optional workflow note for the audit log; not clinical advice."
+            />
+          </label>
+          <p className="muted">Saved with the status change audit log when the case is marked reviewed.</p>
+        </div>
+      )}
 
       <div className="detail-grid">
         <article className="panel">

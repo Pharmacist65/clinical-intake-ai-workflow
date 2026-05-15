@@ -13,6 +13,7 @@ public static class IntakeRequestValidator
     public const int MedicationRouteMaxLength = 80;
     public const int MedicationReasonMaxLength = 500;
     public const int MedicationNotesMaxLength = 1000;
+    public const int ReviewNoteMaxLength = 1000;
     public const int MinimumAge = 0;
     public const int MaximumAge = 120;
 
@@ -69,6 +70,7 @@ public static class IntakeRequestValidator
         }
 
         ValidateRequiredText(validation, nameof(request.Actor), request.Actor, ActorMaxLength);
+        ValidateOptionalText(validation, nameof(request.ReviewNote), request.ReviewNote, ReviewNoteMaxLength);
 
         return validation;
     }

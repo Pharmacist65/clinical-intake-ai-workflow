@@ -5,12 +5,24 @@ using ClinicalIntake.Api.Models;
 using ClinicalIntake.Api.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Clinical Intake AI Workflow API",
+        Version = "v1",
+        Description = "Workflow support API for fictional clinical intake notes, mock AI summaries, medication context, human review and audit logs."
+    });
 });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -53,13 +65,30 @@ app.UseExceptionHandler(exceptionHandler =>
 
 app.UseCors("Frontend");
 
+if (app.Configuration.GetValue<bool>("ApiDocs:Enabled") || app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.DocumentTitle = "Clinical Intake AI Workflow API";
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Clinical Intake AI Workflow API v1");
+    });
+}
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.EnsureCreatedAsync();
+
+    if (app.Configuration.GetValue<bool>("DemoData:SeedOnStartup"))
+    {
+        await DemoDataSeeder.SeedAsync(scope.ServiceProvider, app.Logger);
+    }
 }
 
-app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }))
+    .WithName("HealthCheck")
+    .WithTags("System");
 
 app.MapPost("/api/intakes", async (
     CreateIntakeRequest request,
@@ -74,7 +103,9 @@ app.MapPost("/api/intakes", async (
 
     var intake = await workflow.CreateIntakeAsync(request, cancellationToken);
     return Results.Created($"/api/intakes/{intake.Id}", IntakeMapper.ToDetail(intake));
-});
+})
+    .WithName("CreateIntake")
+    .WithTags("Intakes");
 
 app.MapGet("/api/intakes", async (
     IntakeWorkflowService workflow,
@@ -82,7 +113,9 @@ app.MapGet("/api/intakes", async (
 {
     var intakes = await workflow.ListIntakesAsync(cancellationToken);
     return Results.Ok(intakes.Select(IntakeMapper.ToListItem));
-});
+})
+    .WithName("ListIntakes")
+    .WithTags("Intakes");
 
 app.MapGet("/api/intakes/{id:int}", async (
     int id,
@@ -93,7 +126,9 @@ app.MapGet("/api/intakes/{id:int}", async (
     return intake is null
         ? ApiErrors.NotFound("Intake")
         : Results.Ok(IntakeMapper.ToDetail(intake));
-});
+})
+    .WithName("GetIntake")
+    .WithTags("Intakes");
 
 app.MapPost("/api/intakes/{id:int}/generate-summary", async (
     int id,
@@ -104,7 +139,9 @@ app.MapPost("/api/intakes/{id:int}/generate-summary", async (
     return intake is null
         ? ApiErrors.NotFound("Intake")
         : Results.Ok(IntakeMapper.ToDetail(intake));
-});
+})
+    .WithName("GenerateSummary")
+    .WithTags("Intakes");
 
 app.MapGet("/api/review-queue", async (
     IntakeWorkflowService workflow,
@@ -112,7 +149,9 @@ app.MapGet("/api/review-queue", async (
 {
     var intakes = await workflow.GetReviewQueueAsync(cancellationToken);
     return Results.Ok(intakes.Select(IntakeMapper.ToReviewQueueItem));
-});
+})
+    .WithName("GetReviewQueue")
+    .WithTags("Review");
 
 app.MapPatch("/api/intakes/{id:int}/review-status", async (
     int id,
@@ -131,12 +170,15 @@ app.MapPatch("/api/intakes/{id:int}/review-status", async (
         id,
         reviewStatus,
         request.Actor.Trim(),
+        request.ReviewNote,
         cancellationToken);
 
     return intake is null
         ? ApiErrors.NotFound("Intake")
         : Results.Ok(IntakeMapper.ToDetail(intake));
-});
+})
+    .WithName("UpdateReviewStatus")
+    .WithTags("Review");
 
 app.MapGet("/api/intakes/{id:int}/audit-log", async (
     int id,
@@ -147,7 +189,9 @@ app.MapGet("/api/intakes/{id:int}/audit-log", async (
     return auditLogs is null
         ? ApiErrors.NotFound("Intake")
         : Results.Ok(auditLogs.Select(IntakeMapper.ToAuditLogResponse));
-});
+})
+    .WithName("GetAuditLog")
+    .WithTags("Audit");
 
 app.MapPost("/api/intakes/{id:int}/medications", async (
     int id,
@@ -165,7 +209,9 @@ app.MapPost("/api/intakes/{id:int}/medications", async (
     return medication is null
         ? ApiErrors.NotFound("Intake")
         : Results.Created($"/api/intakes/{id}/medications/{medication.Id}", IntakeMapper.ToMedicationEntryResponse(medication));
-});
+})
+    .WithName("AddMedication")
+    .WithTags("Medication Context");
 
 app.MapGet("/api/intakes/{id:int}/medications", async (
     int id,
@@ -176,7 +222,9 @@ app.MapGet("/api/intakes/{id:int}/medications", async (
     return medications is null
         ? ApiErrors.NotFound("Intake")
         : Results.Ok(medications.Select(IntakeMapper.ToMedicationEntryResponse));
-});
+})
+    .WithName("ListMedications")
+    .WithTags("Medication Context");
 
 app.MapPost("/api/intakes/{id:int}/analyse-medication-context", async (
     int id,
@@ -187,7 +235,9 @@ app.MapPost("/api/intakes/{id:int}/analyse-medication-context", async (
     return intake is null
         ? ApiErrors.NotFound("Intake")
         : Results.Ok(IntakeMapper.ToDetail(intake));
-});
+})
+    .WithName("AnalyseMedicationContext")
+    .WithTags("Medication Context");
 
 app.MapGet("/api/intakes/{id:int}/medication-signals", async (
     int id,
@@ -198,6 +248,10 @@ app.MapGet("/api/intakes/{id:int}/medication-signals", async (
     return signals is null
         ? ApiErrors.NotFound("Intake")
         : Results.Ok(signals.Select(IntakeMapper.ToMedicationSignalResponse));
-});
+})
+    .WithName("ListMedicationSignals")
+    .WithTags("Medication Context");
 
 app.Run();
+
+public partial class Program;

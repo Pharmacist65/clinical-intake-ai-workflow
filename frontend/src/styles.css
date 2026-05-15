@@ -221,6 +221,15 @@ textarea {
   justify-content: flex-start;
 }
 
+.review-note-panel {
+  background: #f8fafc;
+  border: 1px solid #dce3ee;
+  border-radius: 8px;
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
 .detail-grid {
   display: grid;
   gap: 1rem;

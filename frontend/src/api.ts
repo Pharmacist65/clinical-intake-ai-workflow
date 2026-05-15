@@ -57,9 +57,9 @@ export const api = {
     }),
   listMedicationSignals: (id: number) => request<MedicationSignal[]>(`/api/intakes/${id}/medication-signals`),
   listReviewQueue: () => request<ReviewQueueItem[]>("/api/review-queue"),
-  updateReviewStatus: (id: number, reviewStatus: ReviewStatus, actor = "demo-reviewer") =>
+  updateReviewStatus: (id: number, reviewStatus: ReviewStatus, reviewNote?: string | null, actor = "demo-reviewer") =>
     request<IntakeDetail>(`/api/intakes/${id}/review-status`, {
       method: "PATCH",
-      body: JSON.stringify({ reviewStatus, actor })
+      body: JSON.stringify({ reviewStatus, actor, reviewNote: reviewNote?.trim() || null })
     })
 };

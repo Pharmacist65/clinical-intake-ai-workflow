@@ -45,6 +45,7 @@ public sealed class IntakeWorkflowService(
     public async Task<IReadOnlyList<Intake>> ListIntakesAsync(CancellationToken cancellationToken = default) =>
         await db.Intakes
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(intake => intake.RiskFlags)
             .Include(intake => intake.MedicationSignals)
             .OrderByDescending(intake => intake.CreatedAt)
@@ -58,6 +59,7 @@ public sealed class IntakeWorkflowService(
     public async Task<IReadOnlyList<Intake>> GetReviewQueueAsync(CancellationToken cancellationToken = default) =>
         await db.Intakes
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(intake => intake.RiskFlags)
             .Include(intake => intake.MedicationSignals)
             .Where(intake => intake.ReviewStatus == ReviewStatus.NeedsReview)
@@ -254,6 +256,7 @@ public sealed class IntakeWorkflowService(
         int intakeId,
         ReviewStatus reviewStatus,
         string actor,
+        string? reviewNote = null,
         CancellationToken cancellationToken = default)
     {
         var intake = await db.Intakes
@@ -266,13 +269,16 @@ public sealed class IntakeWorkflowService(
         }
 
         var previousStatus = intake.ReviewStatus;
+        var cleanedNote = CleanOptional(reviewNote);
         intake.ReviewStatus = reviewStatus;
         intake.AuditLogs.Add(new AuditLog
         {
             Action = "ReviewStatusUpdated",
             Actor = actor,
             Timestamp = DateTime.UtcNow,
-            Details = $"Review status changed from {previousStatus} to {reviewStatus}."
+            Details = cleanedNote is null
+                ? $"Review status changed from {previousStatus} to {reviewStatus}."
+                : $"Review status changed from {previousStatus} to {reviewStatus}. Reviewer note: {cleanedNote}"
         });
 
         await db.SaveChangesAsync(cancellationToken);
@@ -281,6 +287,7 @@ public sealed class IntakeWorkflowService(
 
     private IQueryable<Intake> QueryFullIntake() =>
         db.Intakes
+            .AsSplitQuery()
             .Include(intake => intake.AiSummary)
             .Include(intake => intake.RiskFlags)
             .Include(intake => intake.MedicationEntries)

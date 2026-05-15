@@ -9,7 +9,8 @@ public sealed record CreateIntakeRequest(
 
 public sealed record UpdateReviewStatusRequest(
     string ReviewStatus,
-    string Actor);
+    string Actor,
+    string? ReviewNote = null);
 
 public sealed record IntakeListItemResponse(
     int Id,
