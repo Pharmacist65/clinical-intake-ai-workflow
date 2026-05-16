@@ -28,7 +28,7 @@ This application focuses on that workflow:
 - C# ASP.NET Core backend fundamentals: minimal API endpoints, validation, service-layer workflow logic, Swagger/OpenAPI documentation, and consistent error responses
 - React + TypeScript frontend: dashboard, intake creation, detail view, summary generation, and review queue UI
 - Database-backed workflow: SQLite with Entity Framework Core models for intakes, summaries, risk flags, and audit logs
-- Pharmacy context layer: medication-history capture, pharmacist-review signals, and medication timeline
+- Pharmacy context layer: medication-history capture, documentation quality checks, pharmacist-review signals, and medication timeline
 - Safe applied AI design: deterministic mock AI, no API keys required, confidence scoring, disclaimers, and constrained output
 - Human-in-the-loop review: high-risk or low-confidence cases are routed to `NeedsReview`
 - Auditability: intake creation, summary generation, medication context analysis, review notes, and review status updates are recorded
@@ -41,10 +41,11 @@ The app lets a care team user:
 2. Generate a deterministic AI-style structured summary.
 3. See possible risk flags and confidence score.
 4. Record medication-history context for pharmacist/clinician review.
-5. Generate medication review signals and reviewer questions.
-6. Route high-risk or low-confidence cases to review.
-7. Mark cases as reviewed with an optional workflow review note.
-8. Inspect the audit log for key workflow actions.
+5. View medication documentation quality gaps.
+6. Generate medication review signals and reviewer questions.
+7. Route high-risk or low-confidence cases to review.
+8. Mark cases as reviewed with an optional workflow review note.
+9. Inspect the audit log for key workflow actions.
 
 ## Screenshots
 
@@ -92,9 +93,11 @@ The backend keeps HTTP handling thin. Request validation lives in small validato
 
 ## Pharmacy Context Layer
 
-The Pharmacy Context Layer adds medication-history capture and pharmacist-review context to the intake workflow. It is intended to surface information that can be missed during intake, especially OTC medicines, incomplete dose/frequency details, household medication context, and possible adverse reaction history.
+The Pharmacy Context Layer adds medication-history capture and pharmacist-review context to the intake workflow. It is intended to surface information that can be missed during intake, especially OTC medicines, incomplete dose/frequency details, unclear source/timing, household medication context, and possible adverse reaction history.
 
 NSAID handling is included as one concrete OTC medication-context example, not as the centre of the system. The pharmacy layer is broader than NSAID detection: it is designed around medication-history completeness, documentation quality, adverse-reaction prompts, household medication context, polypharmacy context, and routing relevant questions to pharmacist/clinician review.
+
+The documentation quality score reflects completeness of captured medication-history fields only. It is not a clinical risk score and does not decide whether a medicine is safe, appropriate, or causally related to symptoms.
 
 Medication outputs are framed only as workflow support signals and reviewer questions. The system does not diagnose, prescribe, recommend treatment, infer causality, or perform real drug-interaction checking.
 
@@ -173,6 +176,7 @@ Unexpected failures return `500 Internal Server Error` with the same simple erro
 | `GET` | `/api/intakes/{id}/medications` | `200 OK` | List medication entries for one intake |
 | `POST` | `/api/intakes/{id}/analyse-medication-context` | `200 OK` | Generate medication review signals |
 | `GET` | `/api/intakes/{id}/medication-signals` | `200 OK` | List medication review signals |
+| `GET` | `/api/intakes/{id}/medication-documentation-quality` | `200 OK` | Assess medication-history documentation completeness |
 
 ### Create Intake
 
@@ -284,6 +288,33 @@ Examples of generated signals:
 - Household medication context
 - Possible adverse reaction history
 
+### Medication Documentation Quality
+
+`GET /api/intakes/{id}/medication-documentation-quality`
+
+This endpoint calculates a non-clinical documentation completeness score from the medication entries already captured for an intake. It looks for missing fields such as dose, frequency, route, timing, reason for use, and unknown source.
+
+The score is for workflow documentation quality only. It is not a clinical risk score, medication reconciliation, diagnosis, prescribing advice, drug-interaction checking, or clinical decision support.
+
+Example response:
+
+```json
+{
+  "score": 55,
+  "status": "Incomplete",
+  "summary": "Medication context has important documentation gaps that should be clarified by a human reviewer.",
+  "issues": [
+    {
+      "medicationEntryId": 4,
+      "medicationName": "Cetirizine",
+      "field": "dose",
+      "reason": "Dose is missing for a current or recent medication."
+    }
+  ],
+  "disclaimer": "Medication documentation quality reflects completeness of captured medication-history fields only. It is not a clinical risk score, diagnosis, prescribing recommendation, medication reconciliation, drug-interaction check, or clinical decision support."
+}
+```
+
 ## Database Models
 
 ### Intake
@@ -355,6 +386,16 @@ Examples of generated signals:
 - `reviewerQuestion`
 - `createdAt`
 
+### MedicationDocumentationQuality
+
+This is computed from captured medication entries rather than stored as a separate table.
+
+- `score`: nullable percentage from 0 to 100
+- `status`: `NotAssessed`, `WellDocumented`, `NeedsClarification`, `Incomplete`
+- `summary`
+- `issues`
+- `disclaimer`
+
 ## Healthcare AI Safety Design
 
 The app is intentionally constrained:
@@ -370,6 +411,7 @@ The app is intentionally constrained:
 - High-risk keywords route the case to human review.
 - Low-confidence summaries route the case to human review.
 - Medication outputs are review signals and questions only.
+- Medication documentation quality is a completeness signal only, not a clinical risk score.
 - High-severity medication signals route the case to human review.
 - Audit logs record intake creation, summary generation, medication context analysis, review notes, and review status updates.
 

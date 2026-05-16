@@ -291,6 +291,51 @@ textarea {
   margin: 0 0 0.85rem;
 }
 
+.medication-quality {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.medication-quality p {
+  color: #4b5567;
+  margin: 0;
+}
+
+.medication-quality small {
+  color: #667085;
+}
+
+.quality-score {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.quality-score strong {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.quality-score span {
+  background: #e6edf7;
+  border-radius: 999px;
+  color: #1f2a44;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 0.35rem 0.55rem;
+  text-align: center;
+}
+
+.quality-issues {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
 .medication-item {
   background: white;
   border: 1px solid #e2e8f0;

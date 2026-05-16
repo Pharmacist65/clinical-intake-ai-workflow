@@ -6,6 +6,7 @@ import type {
   IntakeDetail,
   IntakeListItem,
   MedicationCategory,
+  MedicationDocumentationQuality,
   MedicationEntry,
   MedicationSource,
   MedicationSignal,
@@ -556,10 +557,35 @@ function MedicationContextSection({
       </form>
 
       <div className="detail-grid">
+        <MedicationQualityPanel quality={intake.medicationDocumentationQuality} />
         <MedicationTimeline medications={intake.medicationEntries} />
         <MedicationSignals signals={intake.medicationSignals} />
       </div>
     </section>
+  );
+}
+
+function MedicationQualityPanel({ quality }: { quality: MedicationDocumentationQuality }) {
+  return (
+    <article className="subpanel medication-quality">
+      <h3>Documentation Quality</h3>
+      <div className="quality-score">
+        <strong>{quality.score === null ? "Not assessed" : `${quality.score}%`}</strong>
+        <span>{formatMedicationQualityStatus(quality.status)}</span>
+      </div>
+      <p>{quality.summary}</p>
+      {quality.issues.length > 0 && (
+        <div className="quality-issues">
+          {quality.issues.slice(0, 6).map((issue) => (
+            <p key={`${issue.medicationEntryId}-${issue.field}-${issue.reason}`}>
+              <strong>{issue.medicationName}</strong>: {issue.reason}
+            </p>
+          ))}
+          {quality.issues.length > 6 && <p>{quality.issues.length - 6} more documentation items need clarification.</p>}
+        </div>
+      )}
+      <small>{quality.disclaimer}</small>
+    </article>
   );
 }
 
@@ -747,6 +773,17 @@ function formatMedicationSource(source: MedicationSource) {
   };
 
   return labels[source];
+}
+
+function formatMedicationQualityStatus(status: MedicationDocumentationQuality["status"]) {
+  const labels: Record<MedicationDocumentationQuality["status"], string> = {
+    NotAssessed: "Not assessed",
+    WellDocumented: "Mostly complete",
+    NeedsClarification: "Needs clarification",
+    Incomplete: "Incomplete"
+  };
+
+  return labels[status];
 }
 
 function formatMedicationTiming(medication: MedicationEntry) {

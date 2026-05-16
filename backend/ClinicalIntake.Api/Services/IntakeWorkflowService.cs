@@ -168,6 +168,24 @@ public sealed class IntakeWorkflowService(
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<MedicationDocumentationQuality?> GetMedicationDocumentationQualityAsync(
+        int intakeId,
+        CancellationToken cancellationToken = default)
+    {
+        var exists = await db.Intakes.AnyAsync(intake => intake.Id == intakeId, cancellationToken);
+        if (!exists)
+        {
+            return null;
+        }
+
+        var medications = await db.MedicationEntries
+            .AsNoTracking()
+            .Where(medication => medication.IntakeId == intakeId)
+            .ToListAsync(cancellationToken);
+
+        return MedicationContextService.AssessDocumentationQuality(medications);
+    }
+
     public async Task<Intake?> AnalyseMedicationContextAsync(
         int intakeId,
         string actor,

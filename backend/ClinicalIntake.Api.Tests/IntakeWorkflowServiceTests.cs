@@ -292,6 +292,22 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
         Assert.Equal(ReviewStatus.NeedsReview, updated.ReviewStatus);
     }
 
+    [Fact]
+    public async Task GetMedicationDocumentationQualityAsync_WithIncompleteCurrentMedication_ReturnsClarificationIssues()
+    {
+        var intake = await _workflow.CreateIntakeAsync(DefaultRequest());
+        await _workflow.AddMedicationAsync(intake.Id, MedicationRequest("Cetirizine", category: "Current"));
+
+        var quality = await _workflow.GetMedicationDocumentationQualityAsync(intake.Id);
+
+        Assert.NotNull(quality);
+        Assert.True(quality.Score < 85);
+        Assert.Equal("Incomplete", quality.Status);
+        Assert.Contains(quality.Issues, issue => issue.Field == "dose");
+        Assert.Contains(quality.Issues, issue => issue.Field == "frequency");
+        Assert.Contains("not a clinical risk score", quality.Disclaimer);
+    }
+
     public void Dispose()
     {
         _db.Dispose();

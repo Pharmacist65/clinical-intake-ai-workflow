@@ -5,6 +5,9 @@ namespace ClinicalIntake.Api.Services;
 
 public sealed class MedicationContextService
 {
+    public const string DocumentationQualityDisclaimer =
+        "Medication documentation quality reflects completeness of captured medication-history fields only. It is not a clinical risk score, diagnosis, prescribing recommendation, medication reconciliation, drug-interaction check, or clinical decision support.";
+
     private static readonly string[] NsaidTerms =
     [
         "ibuprofen",
@@ -65,6 +68,49 @@ public sealed class MedicationContextService
         AddAdverseReactionSignals(intake, signals, now);
 
         return signals;
+    }
+
+    public static MedicationDocumentationQuality AssessDocumentationQuality(
+        IReadOnlyCollection<MedicationEntry> medications)
+    {
+        if (medications.Count == 0)
+        {
+            return new MedicationDocumentationQuality(
+                null,
+                "NotAssessed",
+                "No medication entries have been recorded for this intake.",
+                [],
+                DocumentationQualityDisclaimer);
+        }
+
+        var issues = new List<MedicationDocumentationIssue>();
+        var entryScores = medications
+            .Select(medication => AssessMedicationEntry(medication, issues))
+            .ToList();
+        var score = (int)Math.Round(entryScores.Average(), MidpointRounding.AwayFromZero);
+        var status = score switch
+        {
+            >= 85 => "WellDocumented",
+            >= 65 => "NeedsClarification",
+            _ => "Incomplete"
+        };
+
+        var summary = status switch
+        {
+            "WellDocumented" => "Medication context is mostly complete for workflow review.",
+            "NeedsClarification" => "Some medication-history fields should be clarified before or during human review.",
+            _ => "Medication context has important documentation gaps that should be clarified by a human reviewer."
+        };
+
+        return new MedicationDocumentationQuality(
+            score,
+            status,
+            summary,
+            issues
+                .OrderBy(issue => issue.MedicationName)
+                .ThenBy(issue => issue.Field)
+                .ToList(),
+            DocumentationQualityDisclaimer);
     }
 
     private static void AddMedicationSafetySignalIfNeeded(
@@ -203,6 +249,117 @@ public sealed class MedicationContextService
             ReviewerQuestion = reviewerQuestion,
             CreatedAt = createdAt
         };
+
+    private static int AssessMedicationEntry(
+        MedicationEntry medication,
+        ICollection<MedicationDocumentationIssue> issues)
+    {
+        var penalty = 0;
+
+        penalty += AddIssueIf(
+            issues,
+            medication,
+            medication.Source == MedicationSource.Unknown,
+            "source",
+            "Medication source is unknown.",
+            10);
+
+        penalty += AddIssueIf(
+            issues,
+            medication,
+            string.IsNullOrWhiteSpace(medication.Route),
+            "route",
+            "Route is not documented.",
+            5);
+
+        penalty += AddIssueIf(
+            issues,
+            medication,
+            string.IsNullOrWhiteSpace(medication.ReasonForUse),
+            "reasonForUse",
+            "Reason for use is not documented.",
+            5);
+
+        if (medication.Category is MedicationCategory.Current or MedicationCategory.Recent)
+        {
+            penalty += AddIssueIf(
+                issues,
+                medication,
+                string.IsNullOrWhiteSpace(medication.Dose),
+                "dose",
+                "Dose is missing for a current or recent medication.",
+                20);
+
+            penalty += AddIssueIf(
+                issues,
+                medication,
+                string.IsNullOrWhiteSpace(medication.Frequency),
+                "frequency",
+                "Frequency is missing for a current or recent medication.",
+                20);
+
+            penalty += AddIssueIf(
+                issues,
+                medication,
+                medication.StartedAt is null && medication.StoppedAt is null,
+                "timing",
+                "Medication timing is not documented.",
+                10);
+        }
+
+        if (medication.Category == MedicationCategory.OTC)
+        {
+            penalty += AddIssueIf(
+                issues,
+                medication,
+                string.IsNullOrWhiteSpace(medication.Dose),
+                "dose",
+                "Dose is not documented for OTC medication context.",
+                10);
+
+            penalty += AddIssueIf(
+                issues,
+                medication,
+                string.IsNullOrWhiteSpace(medication.Frequency),
+                "frequency",
+                "Frequency is not documented for OTC medication context.",
+                10);
+        }
+
+        if (medication.Category == MedicationCategory.FamilyHousehold)
+        {
+            penalty += AddIssueIf(
+                issues,
+                medication,
+                string.IsNullOrWhiteSpace(medication.Notes),
+                "ownershipContext",
+                "Household or family medication ownership context is not documented.",
+                10);
+        }
+
+        return Math.Max(0, 100 - penalty);
+    }
+
+    private static int AddIssueIf(
+        ICollection<MedicationDocumentationIssue> issues,
+        MedicationEntry medication,
+        bool condition,
+        string field,
+        string reason,
+        int penalty)
+    {
+        if (!condition)
+        {
+            return 0;
+        }
+
+        issues.Add(new MedicationDocumentationIssue(
+            medication.Id,
+            medication.MedicationName,
+            field,
+            reason));
+        return penalty;
+    }
 
     private static bool ContainsAny(string text, IEnumerable<string> terms) =>
         terms.Any(term => ContainsTerm(text, term));

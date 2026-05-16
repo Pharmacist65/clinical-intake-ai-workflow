@@ -3,6 +3,7 @@ import type {
   CreateMedicationPayload,
   IntakeDetail,
   IntakeListItem,
+  MedicationDocumentationQuality,
   MedicationEntry,
   MedicationSignal,
   ReviewQueueItem,
@@ -54,8 +55,10 @@ export const api = {
   analyseMedicationContext: (id: number) =>
     request<IntakeDetail>(`/api/intakes/${id}/analyse-medication-context`, {
       method: "POST"
-    }),
+  }),
   listMedicationSignals: (id: number) => request<MedicationSignal[]>(`/api/intakes/${id}/medication-signals`),
+  getMedicationDocumentationQuality: (id: number) =>
+    request<MedicationDocumentationQuality>(`/api/intakes/${id}/medication-documentation-quality`),
   listReviewQueue: () => request<ReviewQueueItem[]>("/api/review-queue"),
   updateReviewStatus: (id: number, reviewStatus: ReviewStatus, reviewNote?: string | null, actor = "demo-reviewer") =>
     request<IntakeDetail>(`/api/intakes/${id}/review-status`, {

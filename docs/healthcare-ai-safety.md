@@ -10,6 +10,7 @@ The safest first version of this idea is not a powerful model hidden behind an A
 - Produces a clearly labelled support summary
 - Flags simple priority terms
 - Captures medication-history context as review questions
+- Shows medication-history documentation gaps without clinical scoring
 - Shows confidence
 - Routes uncertain or high-risk cases to humans
 - Records important workflow actions
@@ -40,6 +41,7 @@ The reviewer can inspect:
 - Risk flags and reasons
 - Confidence score
 - Medication timeline and medication review questions
+- Medication documentation quality issues
 - Audit log
 
 Only a human reviewer can mark a case `Reviewed`.
@@ -50,7 +52,7 @@ The first version avoids real LLM calls deliberately.
 
 Benefits:
 
-- Recruiters and interviewers can run the project without API keys.
+- The project can be run and reviewed without API keys.
 - Tests are deterministic.
 - Safety behaviour is readable in source code.
 - The demo focuses on workflow design and governance boundaries.

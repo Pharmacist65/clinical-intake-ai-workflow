@@ -35,6 +35,7 @@ public sealed record IntakeDetailResponse(
     IReadOnlyList<RiskFlagResponse> RiskFlags,
     IReadOnlyList<MedicationEntryResponse> MedicationEntries,
     IReadOnlyList<MedicationSignalResponse> MedicationSignals,
+    MedicationDocumentationQualityResponse MedicationDocumentationQuality,
     IReadOnlyList<AuditLogResponse> AuditLogs);
 
 public sealed record AiSummaryResponse(

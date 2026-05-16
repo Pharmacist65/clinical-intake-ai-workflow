@@ -1,4 +1,5 @@
 using ClinicalIntake.Api.Models;
+using ClinicalIntake.Api.Services;
 
 namespace ClinicalIntake.Api.Contracts;
 
@@ -41,6 +42,8 @@ public static class IntakeMapper
                 .ThenBy(signal => signal.Label)
                 .Select(ToMedicationSignalResponse)
                 .ToList(),
+            ToMedicationDocumentationQualityResponse(
+                MedicationContextService.AssessDocumentationQuality(intake.MedicationEntries)),
             intake.AuditLogs
                 .OrderBy(log => log.Timestamp)
                 .Select(ToAuditLogResponse)
@@ -92,6 +95,15 @@ public static class IntakeMapper
             signal.ReviewerQuestion,
             signal.CreatedAt);
 
+    public static MedicationDocumentationQualityResponse ToMedicationDocumentationQualityResponse(
+        MedicationDocumentationQuality quality) =>
+        new(
+            quality.Score,
+            quality.Status,
+            quality.Summary,
+            quality.Issues.Select(ToMedicationDocumentationIssueResponse).ToList(),
+            quality.Disclaimer);
+
     private static AiSummaryResponse ToAiSummaryResponse(AiSummary summary) =>
         new(
             summary.Id,
@@ -106,6 +118,10 @@ public static class IntakeMapper
 
     private static RiskFlagResponse ToRiskFlagResponse(RiskFlag flag) =>
         new(flag.Id, flag.IntakeId, flag.Label, flag.Severity.ToString(), flag.Reason);
+
+    private static MedicationDocumentationIssueResponse ToMedicationDocumentationIssueResponse(
+        MedicationDocumentationIssue issue) =>
+        new(issue.MedicationEntryId, issue.MedicationName, issue.Field, issue.Reason);
 
     private static RiskSeverity? HighestSeverity(Intake intake)
     {

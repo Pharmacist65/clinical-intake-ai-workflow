@@ -22,6 +22,21 @@ NSAID handling is included as one concrete OTC medication-context example, not a
 
 The system does not decide whether use is appropriate or unsafe. It only creates review questions.
 
+## Medication Documentation Quality
+
+The app includes a medication documentation quality assessment. This is a non-clinical completeness check over captured medication-history fields.
+
+It looks for documentation gaps such as:
+
+- missing dose or frequency for current/recent medicines
+- missing route
+- unknown medication source
+- missing timing
+- missing reason for use
+- unclear household/family medication ownership context
+
+The score is not a clinical risk score. It does not say whether a medicine is appropriate, inappropriate, safe, unsafe, causal, contraindicated, or interacting. It only helps a reviewer see which medication-history details may need clarification.
+
 ## What The System Does
 
 The system allows a care team user to record medication context:
@@ -45,6 +60,8 @@ It can then generate deterministic medication review signals, such as:
 - Polypharmacy context
 - Household medication context
 - Possible adverse reaction history
+
+It can also show medication documentation quality, including a completeness score and field-level documentation issues.
 
 Every signal is phrased as a review signal or reviewer question.
 
@@ -72,6 +89,8 @@ Medication signals are routed into the same human review model as the rest of th
 High-severity medication signals set the intake status to `NeedsReview`. This is not autonomous clinical triage. It is a workflow routing signal that indicates a qualified clinician or pharmacist should review the context.
 
 The UI keeps the original intake, medication timeline, medication signals, reviewer questions, and audit log visible together.
+
+The documentation quality score stays outside review-status routing. It is shown as a documentation aid, while high-severity medication signals remain the mechanism that can route an intake to `NeedsReview`.
 
 ## Auditability
 

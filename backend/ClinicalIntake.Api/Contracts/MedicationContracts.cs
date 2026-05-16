@@ -39,3 +39,16 @@ public sealed record MedicationSignalResponse(
     string Rationale,
     string ReviewerQuestion,
     DateTime CreatedAt);
+
+public sealed record MedicationDocumentationQualityResponse(
+    int? Score,
+    string Status,
+    string Summary,
+    IReadOnlyList<MedicationDocumentationIssueResponse> Issues,
+    string Disclaimer);
+
+public sealed record MedicationDocumentationIssueResponse(
+    int? MedicationEntryId,
+    string MedicationName,
+    string Field,
+    string Reason);

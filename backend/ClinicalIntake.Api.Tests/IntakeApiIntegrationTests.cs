@@ -94,7 +94,44 @@ public sealed class IntakeApiIntegrationTests : IClassFixture<ClinicalIntakeApiF
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains("/api/intakes", body, StringComparison.Ordinal);
+        Assert.Contains("/api/intakes/{id}/medication-documentation-quality", body, StringComparison.Ordinal);
         Assert.Contains("Clinical Intake AI Workflow API", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task MedicationDocumentationQualityEndpoint_ReturnsDocumentationOnlyAssessment()
+    {
+        var createResponse = await _client.PostAsJsonAsync("/api/intakes", new CreateIntakeRequest(
+            "API Patient C",
+            14,
+            "Family reports sleep concerns and an unclear current medication history.",
+            "api integration test",
+            "api-test"));
+        var created = await createResponse.Content.ReadFromJsonAsync<IntakeDetailResponse>();
+
+        Assert.NotNull(created);
+
+        await _client.PostAsJsonAsync($"/api/intakes/{created.Id}/medications", new CreateMedicationEntryRequest(
+            "Cetirizine",
+            "Current",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "Unknown",
+            null,
+            null));
+
+        var response = await _client.GetAsync($"/api/intakes/{created.Id}/medication-documentation-quality");
+
+        response.EnsureSuccessStatusCode();
+        var quality = await response.Content.ReadFromJsonAsync<MedicationDocumentationQualityResponse>();
+        Assert.NotNull(quality);
+        Assert.Equal("Incomplete", quality.Status);
+        Assert.Contains(quality.Issues, issue => issue.Field == "source");
+        Assert.Contains("not a clinical risk score", quality.Disclaimer, StringComparison.OrdinalIgnoreCase);
     }
 }
 

@@ -27,6 +27,7 @@ export interface IntakeDetail {
   riskFlags: RiskFlag[];
   medicationEntries: MedicationEntry[];
   medicationSignals: MedicationSignal[];
+  medicationDocumentationQuality: MedicationDocumentationQuality;
   auditLogs: AuditLog[];
 }
 
@@ -86,6 +87,21 @@ export interface MedicationSignal {
   rationale: string;
   reviewerQuestion: string;
   createdAt: string;
+}
+
+export interface MedicationDocumentationQuality {
+  score: number | null;
+  status: "NotAssessed" | "WellDocumented" | "NeedsClarification" | "Incomplete";
+  summary: string;
+  issues: MedicationDocumentationIssue[];
+  disclaimer: string;
+}
+
+export interface MedicationDocumentationIssue {
+  medicationEntryId: number | null;
+  medicationName: string;
+  field: string;
+  reason: string;
 }
 
 export interface ReviewQueueItem {

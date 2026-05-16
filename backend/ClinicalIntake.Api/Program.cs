@@ -252,6 +252,19 @@ app.MapGet("/api/intakes/{id:int}/medication-signals", async (
     .WithName("ListMedicationSignals")
     .WithTags("Medication Context");
 
+app.MapGet("/api/intakes/{id:int}/medication-documentation-quality", async (
+    int id,
+    IntakeWorkflowService workflow,
+    CancellationToken cancellationToken) =>
+{
+    var quality = await workflow.GetMedicationDocumentationQualityAsync(id, cancellationToken);
+    return quality is null
+        ? ApiErrors.NotFound("Intake")
+        : Results.Ok(IntakeMapper.ToMedicationDocumentationQualityResponse(quality));
+})
+    .WithName("GetMedicationDocumentationQuality")
+    .WithTags("Medication Context");
+
 app.Run();
 
 public partial class Program;
