@@ -1,0 +1,142 @@
+[
+  {
+    "id": "routine-school-sleep-context",
+    "description": "Routine fictional intake with school, sleep, attention and communication context.",
+    "age": 10,
+    "intakeText": "Parent reports school concerns, poor sleep, attention changes and communication questions over the last term. Family wants support planning and context review.",
+    "medications": [],
+    "expected": {
+      "reviewStatus": "New",
+      "minimumConfidenceScore": 0.75,
+      "maximumConfidenceScore": null,
+      "riskLabels": [
+        "Functional impact"
+      ],
+      "medicationSignalLabels": [],
+      "medicationDocumentationStatus": "NotAssessed"
+    }
+  },
+  {
+    "id": "high-risk-safeguarding-language",
+    "description": "Fictional intake with self-harm and suicidal language that should route to human review.",
+    "age": 15,
+    "intakeText": "Family reports self-harm comments and suicidal language alongside school withdrawal and sleep disruption. The note is fictional and is used only to test workflow routing.",
+    "medications": [],
+    "expected": {
+      "reviewStatus": "NeedsReview",
+      "minimumConfidenceScore": 0.75,
+      "maximumConfidenceScore": null,
+      "riskLabels": [
+        "Potential immediate safety or safeguarding concern",
+        "Functional impact"
+      ],
+      "medicationSignalLabels": [],
+      "medicationDocumentationStatus": "NotAssessed"
+    }
+  },
+  {
+    "id": "low-confidence-brief-note",
+    "description": "Brief fictional note that should route to review because mock confidence is below threshold.",
+    "age": 12,
+    "intakeText": "Brief unclear note.",
+    "medications": [],
+    "expected": {
+      "reviewStatus": "NeedsReview",
+      "minimumConfidenceScore": null,
+      "maximumConfidenceScore": 0.74,
+      "riskLabels": [],
+      "medicationSignalLabels": [],
+      "medicationDocumentationStatus": "NotAssessed"
+    }
+  },
+  {
+    "id": "otc-nsaid-with-asthma-context",
+    "description": "Fictional OTC NSAID context with asthma language that should create a high-severity medication review signal.",
+    "age": 12,
+    "intakeText": "Family reports school difficulty and asthma history. They also mention recent over-the-counter pain relief use during intake, but no clinical conclusion is made.",
+    "medications": [
+      {
+        "medicationName": "Nurofen",
+        "category": "OTC",
+        "dose": "200 mg",
+        "route": "oral",
+        "frequency": "twice daily as reported",
+        "reasonForUse": "Pain relief reported by family",
+        "source": "FamilyReported",
+        "prescribedBy": null,
+        "notes": "OTC medicine reported by family."
+      }
+    ],
+    "expected": {
+      "reviewStatus": "NeedsReview",
+      "minimumConfidenceScore": 0.75,
+      "maximumConfidenceScore": null,
+      "riskLabels": [],
+      "medicationSignalLabels": [
+        "Medication safety review signal",
+        "OTC NSAID context"
+      ],
+      "medicationDocumentationStatus": "WellDocumented"
+    }
+  },
+  {
+    "id": "incomplete-current-medication-history",
+    "description": "Fictional current medication entry missing dose and frequency, used to test documentation quality prompts.",
+    "age": 9,
+    "intakeText": "Parent reports school concerns, poor sleep and attention changes over several months. Medication details are incomplete and need documentation clarification.",
+    "medications": [
+      {
+        "medicationName": "Cetirizine",
+        "category": "Current",
+        "dose": null,
+        "route": null,
+        "frequency": null,
+        "reasonForUse": null,
+        "source": "FamilyReported",
+        "prescribedBy": null,
+        "notes": null
+      }
+    ],
+    "expected": {
+      "reviewStatus": "New",
+      "minimumConfidenceScore": 0.75,
+      "maximumConfidenceScore": null,
+      "riskLabels": [
+        "Functional impact"
+      ],
+      "medicationSignalLabels": [
+        "Incomplete medication history"
+      ],
+      "medicationDocumentationStatus": "Incomplete"
+    }
+  },
+  {
+    "id": "possible-adverse-reaction-history",
+    "description": "Fictional medication notes mentioning reaction language that should route to pharmacist or clinician review.",
+    "age": 34,
+    "intakeText": "Patient reports previous communication with clinic about medication history. No diagnosis is inferred from this fictional intake.",
+    "medications": [
+      {
+        "medicationName": "Amoxicillin",
+        "category": "Past",
+        "dose": null,
+        "route": "oral",
+        "frequency": null,
+        "reasonForUse": "Historical medication context",
+        "source": "PatientReported",
+        "prescribedBy": null,
+        "notes": "Patient reports rash and swelling reaction history."
+      }
+    ],
+    "expected": {
+      "reviewStatus": "NeedsReview",
+      "minimumConfidenceScore": 0.75,
+      "maximumConfidenceScore": null,
+      "riskLabels": [],
+      "medicationSignalLabels": [
+        "Possible adverse reaction history"
+      ],
+      "medicationDocumentationStatus": "WellDocumented"
+    }
+  }
+]

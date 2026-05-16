@@ -68,6 +68,12 @@ This is a developer convenience, not a production deployment design. Production 
 
 This keeps the project runnable without API keys and makes tests stable.
 
+### Evaluation Dataset
+
+The backend test suite includes a small fictional evaluation dataset for deterministic workflow checks. These cases run through the real workflow service and assert expected review routing, confidence thresholds, risk flag labels, medication signal labels and medication documentation quality status.
+
+This is regression coverage for the MVP's workflow rules, not clinical validation. It does not claim diagnostic accuracy, prescribing safety, autonomous triage safety or real-world model performance.
+
 ### Pharmacy Context Layer
 
 `MedicationContextService` is deterministic. It calculates a documentation quality score from captured medication-history fields and scans medication entries/intake context for review signals such as incomplete medication history, household medication context, polypharmacy context, possible adverse reaction history and OTC NSAID context.

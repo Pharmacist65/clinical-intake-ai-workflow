@@ -32,6 +32,7 @@ This application focuses on that workflow:
 - Safe applied AI design: deterministic mock AI, no API keys required, confidence scoring, disclaimers, and constrained output
 - Human-in-the-loop review: high-risk or low-confidence cases are routed to `NeedsReview`
 - Auditability: intake creation, summary generation, medication context analysis, review notes, and review status updates are recorded
+- Evaluation discipline: fictional dataset-driven tests check expected routing, risk flags, medication signals, and documentation-quality status
 
 ## Product Summary
 
@@ -68,7 +69,7 @@ The screenshots below use fictional demo data only.
 - Backend: ASP.NET Core Web API, C#
 - Runtime target: .NET 8 LTS
 - Database: SQLite with Entity Framework Core
-- Tests: xUnit unit tests and API integration tests
+- Tests: xUnit unit tests, API integration tests, and fictional dataset-driven workflow checks
 - Frontend: React, TypeScript, Vite
 - AI mode: deterministic mock service, no real API key required
 - API docs: Swagger/OpenAPI at `/swagger`
@@ -114,6 +115,14 @@ This feature does not perform medication reconciliation, drug interaction checki
 Medication context can contribute to `NeedsReview` routing when a high-severity medication signal is generated. This is a workflow routing signal for human review, not autonomous triage.
 
 See [docs/pharmacy-context-layer.md](docs/pharmacy-context-layer.md) for the full safety explanation.
+
+## Evaluation Dataset
+
+The repository includes a small fictional evaluation dataset for deterministic workflow checks. The dataset runs representative intake and medication-context scenarios through the real backend workflow service and verifies expected review status, confidence thresholds, risk labels, medication signal labels, and medication documentation quality status.
+
+This is not clinical validation. It does not measure diagnostic accuracy, prescribing safety, medication appropriateness, triage quality, or real-world model performance. It exists to make the MVP easier to inspect and to prevent regressions in the deterministic workflow rules.
+
+See [docs/evaluation-dataset.md](docs/evaluation-dataset.md) for the dataset scope, current fictional cases, and safety boundaries.
 
 ## API Documentation
 
@@ -449,7 +458,7 @@ Planned improvements, not currently implemented:
 - Role-based access control
 - Production deployment design
 - Observability and monitoring
-- More robust evaluation dataset for routing and summary behaviour
+- Larger synthetic evaluation dataset for workflow routing and summary behaviour
 
 See [docs/implementation-roadmap.md](docs/implementation-roadmap.md) for the ordered build plan, including the future multimodal clinical context concept.
 
@@ -518,6 +527,8 @@ docker compose down --volumes
 ```bash
 dotnet test backend/ClinicalIntake.Api.Tests
 ```
+
+The backend test suite includes fictional dataset-driven workflow checks from `backend/ClinicalIntake.Api.Tests/TestData/evaluation-cases.json`.
 
 Frontend build check:
 

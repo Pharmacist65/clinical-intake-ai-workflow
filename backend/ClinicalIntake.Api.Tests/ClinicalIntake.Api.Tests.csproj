@@ -25,4 +25,8 @@
   <ItemGroup>
     <ProjectReference Include="../ClinicalIntake.Api/ClinicalIntake.Api.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestData/evaluation-cases.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
