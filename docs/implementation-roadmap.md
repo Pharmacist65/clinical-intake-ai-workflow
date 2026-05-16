@@ -14,42 +14,43 @@ This roadmap keeps the project progression deliberate. The goal is to make the a
 - Backend unit tests and API integration tests
 - Medication documentation quality score for captured medication-history completeness
 - FHIR/HL7 integration concept document for future interoperability planning
+- Local Docker Compose setup for backend, frontend and SQLite volume
 
 ## Next Build Sequence
 
-1. Docker setup
-   - Add a simple local development Docker Compose setup.
-   - Keep SQLite local and avoid deployment complexity.
-
-2. Evaluation dataset
+1. Evaluation dataset
    - Add a small fictional dataset for deterministic summary and routing checks.
    - Include expected review statuses and expected signal labels.
 
-3. Multimodal Clinical Context Layer concept
+2. Multimodal Clinical Context Layer concept
    - Design a safe future layer for text intake, voice transcript text and document/OCR text.
    - Do not claim zero missed risk.
    - Do not interpret clinical images or make diagnoses.
    - Route extracted context into human-review prompts with evidence snippets.
 
-4. Context Event model
+3. Context Event model
    - Add a generic event model for intake context, such as `sourceType`, `sourceLabel`, `content`, `capturedAt`, `confidence` and `createdBy`.
    - Use it to preserve where each piece of context came from.
 
-5. Evidence-linked review signals
+4. Evidence-linked review signals
    - Attach review signals to short source snippets.
    - Help reviewers understand why a workflow prompt was created.
 
-6. Mock transcript ingestion
+5. Mock transcript ingestion
    - Add a text transcript endpoint as a safe stand-in for voice ingestion.
    - Keep real speech-to-text as a planned adapter only.
 
-7. Mock document/OCR ingestion
+6. Mock document/OCR ingestion
    - Add fictional document text ingestion for referral notes or medication lists.
    - Do not process real patient documents.
 
-8. Optional FHIR-style export examples
+7. Optional FHIR-style export examples
    - Add fictional JSON export examples for intake, medication context and audit events.
    - Do not connect to real healthcare systems.
+
+8. Production deployment design
+   - Document production concerns separately from local Docker Compose.
+   - Include migrations, secrets, authentication, monitoring and environment-specific configuration.
 
 9. Optional AI adapters
    - Add environment-variable-based adapters later.

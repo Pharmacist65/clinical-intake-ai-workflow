@@ -447,7 +447,7 @@ Planned improvements, not currently implemented:
 - Retrieval-augmented generation over approved clinical policy documents
 - FHIR/HL7 adapter prototypes using fictional example payloads
 - Role-based access control
-- Docker deployment
+- Production deployment design
 - Observability and monitoring
 - More robust evaluation dataset for routing and summary behaviour
 
@@ -489,6 +489,28 @@ If your backend runs on a different URL, create `frontend/.env.local`:
 
 ```bash
 VITE_API_BASE_URL=http://localhost:5108
+```
+
+## How To Run With Docker
+
+Docker is optional. It is provided as a local development convenience, not as a production deployment setup.
+
+From the repository root:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- Frontend: `http://localhost:5173`
+- Backend health check: `http://localhost:5108/api/health`
+- Swagger/OpenAPI: `http://localhost:5108/swagger`
+
+The backend container stores its local SQLite database in a Docker volume named `clinical-intake-ai-workflow_clinical-intake-data`. To reset the demo database:
+
+```bash
+docker compose down --volumes
 ```
 
 ## How To Run Tests

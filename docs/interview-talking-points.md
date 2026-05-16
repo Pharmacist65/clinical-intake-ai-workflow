@@ -58,9 +58,9 @@ Human review is central to the design:
 
 ## Trade-Offs
 
-I chose a small architecture instead of a complex one. The first version has no authentication, no Docker setup, no real LLM integration and no live FHIR/HL7 integration. That is intentional for a small MVP: the priority is to show clean workflow modelling, safe AI framing and understandable code.
+I chose a small architecture instead of a complex one. The first version has no authentication, no production deployment, no real LLM integration and no live FHIR/HL7 integration. That is intentional for a small MVP: the priority is to show clean workflow modelling, safe AI framing and understandable code.
 
-SQLite and `EnsureCreated` keep setup simple. In production, I would use migrations, environment-specific configuration and managed database infrastructure.
+SQLite and `EnsureCreated` keep setup simple. I added Docker Compose as a local development convenience, but not as production infrastructure. In production, I would use migrations, environment-specific configuration and managed database infrastructure.
 
 ## What I Would Improve Next
 
@@ -69,7 +69,7 @@ The next improvements I would discuss are:
 - Add an optional OpenAI adapter behind an interface while keeping mock mode as the default.
 - Add RAG over local clinical policy documents so generated suggestions are grounded in approved guidance.
 - Add role-based access control for reviewers and administrators.
-- Add Docker and deployment documentation.
+- Add production deployment documentation beyond the local Docker Compose setup.
 - Add structured observability for summary generation, review queue volume and failure modes.
 - Build a small evaluation dataset to test keyword rules and model outputs against expected workflow routing.
 - Add fictional FHIR-style export examples for intake, medication context and audit events, while keeping identifiable patient data out of the demo.

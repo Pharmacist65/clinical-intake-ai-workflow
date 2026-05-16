@@ -45,6 +45,16 @@ Keeping validation, mapping and workflow logic separated makes the code easier t
 
 Entity Framework Core persists data to SQLite. The first version uses `EnsureCreated` to keep local setup simple. If the database is empty and `DemoData:SeedOnStartup` is enabled, fictional seed cases are created so the app opens with useful workflow examples. A production version would use migrations and environment-specific database configuration.
 
+### Local Docker Setup
+
+The repository includes Dockerfiles for the backend and frontend plus a root `docker-compose.yml` for local development. The compose setup runs:
+
+- the ASP.NET Core API on host port `5108`
+- the Vite frontend on host port `5173`
+- SQLite in a named Docker volume mounted at `/data`
+
+This is a developer convenience, not a production deployment design. Production hosting would need proper migrations, secrets management, authentication, monitoring, HTTPS termination and environment-specific infrastructure.
+
 ### Mock AI Service
 
 `MockAiSummaryService` is deterministic. It scans for configured terms and produces:
