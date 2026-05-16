@@ -95,6 +95,14 @@ Possible conceptual mappings include:
 
 See [fhir-hl7-integration-concept.md](fhir-hl7-integration-concept.md) for the full mapping and safety boundaries.
 
+### Multimodal Clinical Context Concept
+
+The project also includes a future architecture concept for text-derived context from multiple sources, such as intake forms, voice transcript text, document/OCR text, medication-history notes and manual team notes.
+
+This is documentation only. The current application does not process audio, clinical images, scanned documents, real patient records or live healthcare feeds. The concept proposes source-preserving `ContextEvent` records and evidence-linked review signals so future workflow prompts can point back to the text that triggered them.
+
+See [multimodal-clinical-context-layer.md](multimodal-clinical-context-layer.md) for the proposed model, workflow and safety boundaries.
+
 ## Workflow Rules
 
 - New intakes start with `ReviewStatus.New`.

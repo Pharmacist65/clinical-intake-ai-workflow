@@ -33,6 +33,7 @@ This application focuses on that workflow:
 - Human-in-the-loop review: high-risk or low-confidence cases are routed to `NeedsReview`
 - Auditability: intake creation, summary generation, medication context analysis, review notes, and review status updates are recorded
 - Evaluation discipline: fictional dataset-driven tests check expected routing, risk flags, medication signals, and documentation-quality status
+- Future-safe architecture thinking: documented concepts for interoperability and multimodal context without claiming live EHR, audio, OCR, image or LLM capability
 
 ## Product Summary
 
@@ -99,6 +100,14 @@ The project includes a FHIR/HL7 concept document to show how the internal workfl
 See [docs/fhir-hl7-integration-concept.md](docs/fhir-hl7-integration-concept.md) for the conceptual mapping between internal models such as `Intake`, `MedicationEntry`, `MedicationSignal`, `ReviewStatus`, and possible FHIR concepts such as `QuestionnaireResponse`, `MedicationStatement`, `Task`, `Provenance`, and `AuditEvent`.
 
 This is documentation only. The current application does not connect to NHS systems, EHRs, pharmacy systems, FHIR servers, or HL7 message feeds.
+
+## Multimodal Clinical Context Concept
+
+The project includes a future architecture concept for handling text-derived context from multiple sources, such as intake forms, voice transcript text, document/OCR text, medication-history notes, and manual team notes.
+
+This is documentation only. The current application does not process audio, clinical images, scanned documents, real patient records, or live healthcare feeds. The concept focuses on preserving source provenance, linking review signals to short evidence snippets, and routing prompts to qualified human review.
+
+See [docs/multimodal-clinical-context-layer.md](docs/multimodal-clinical-context-layer.md) for the proposed `ContextEvent` model, evidence-linked review signal concept, safety boundaries, and future implementation sequence.
 
 ## Pharmacy Context Layer
 
@@ -455,12 +464,15 @@ Planned improvements, not currently implemented:
 - Real LLM integration via API with an environment-variable based adapter
 - Retrieval-augmented generation over approved clinical policy documents
 - FHIR/HL7 adapter prototypes using fictional example payloads
+- Context event model for preserving text-source provenance
+- Evidence-linked review signals with source snippets
+- Mock transcript and document/OCR text ingestion using fictional data
 - Role-based access control
 - Production deployment design
 - Observability and monitoring
 - Larger synthetic evaluation dataset for workflow routing and summary behaviour
 
-See [docs/implementation-roadmap.md](docs/implementation-roadmap.md) for the ordered build plan, including the future multimodal clinical context concept.
+See [docs/implementation-roadmap.md](docs/implementation-roadmap.md) for the ordered build plan.
 
 ## How To Run Backend
 
