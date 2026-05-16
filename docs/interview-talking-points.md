@@ -38,6 +38,8 @@ The backend separates concerns:
 
 This keeps the project readable and testable.
 
+I also added a FHIR/HL7 concept document to show how the internal models could later map to healthcare interoperability concepts such as `QuestionnaireResponse`, `MedicationStatement`, `Task`, `Provenance` and `AuditEvent`. It is intentionally documentation-only: the app does not connect to a real EHR, pharmacy system, FHIR server or HL7 message feed.
+
 ## AI Safety
 
 The AI component is deliberately constrained. It does not make clinical decisions. It produces a structured summary, flags configured terms and adds a safety disclaimer.
@@ -56,7 +58,7 @@ Human review is central to the design:
 
 ## Trade-Offs
 
-I chose a small architecture instead of a complex one. The first version has no authentication, no Docker setup, no real LLM integration and no FHIR integration. That is intentional for a small MVP: the priority is to show clean workflow modelling, safe AI framing and understandable code.
+I chose a small architecture instead of a complex one. The first version has no authentication, no Docker setup, no real LLM integration and no live FHIR/HL7 integration. That is intentional for a small MVP: the priority is to show clean workflow modelling, safe AI framing and understandable code.
 
 SQLite and `EnsureCreated` keep setup simple. In production, I would use migrations, environment-specific configuration and managed database infrastructure.
 
@@ -70,4 +72,4 @@ The next improvements I would discuss are:
 - Add Docker and deployment documentation.
 - Add structured observability for summary generation, review queue volume and failure modes.
 - Build a small evaluation dataset to test keyword rules and model outputs against expected workflow routing.
-- Explore FHIR or HL7 integration for intake source and patient context, while keeping identifiable patient data out of the demo.
+- Add fictional FHIR-style export examples for intake, medication context and audit events, while keeping identifiable patient data out of the demo.

@@ -13,43 +13,44 @@ This roadmap keeps the project progression deliberate. The goal is to make the a
 - Review status audit note support
 - Backend unit tests and API integration tests
 - Medication documentation quality score for captured medication-history completeness
+- FHIR/HL7 integration concept document for future interoperability planning
 
 ## Next Build Sequence
 
-1. FHIR/HL7 integration concept
-   - Add a design document mapping current models to FHIR concepts such as `Patient`, `QuestionnaireResponse`, `MedicationStatement` and `Observation`.
-   - Keep this as architecture documentation first, not a live integration.
-
-2. Docker setup
+1. Docker setup
    - Add a simple local development Docker Compose setup.
    - Keep SQLite local and avoid deployment complexity.
 
-3. Evaluation dataset
+2. Evaluation dataset
    - Add a small fictional dataset for deterministic summary and routing checks.
    - Include expected review statuses and expected signal labels.
 
-4. Multimodal Clinical Context Layer concept
+3. Multimodal Clinical Context Layer concept
    - Design a safe future layer for text intake, voice transcript text and document/OCR text.
    - Do not claim zero missed risk.
    - Do not interpret clinical images or make diagnoses.
    - Route extracted context into human-review prompts with evidence snippets.
 
-5. Context Event model
+4. Context Event model
    - Add a generic event model for intake context, such as `sourceType`, `sourceLabel`, `content`, `capturedAt`, `confidence` and `createdBy`.
    - Use it to preserve where each piece of context came from.
 
-6. Evidence-linked review signals
+5. Evidence-linked review signals
    - Attach review signals to short source snippets.
    - Help reviewers understand why a workflow prompt was created.
 
-7. Mock transcript ingestion
+6. Mock transcript ingestion
    - Add a text transcript endpoint as a safe stand-in for voice ingestion.
    - Keep real speech-to-text as a planned adapter only.
 
-8. Mock document/OCR ingestion
+7. Mock document/OCR ingestion
    - Add fictional document text ingestion for referral notes or medication lists.
    - Do not process real patient documents.
 
+8. Optional FHIR-style export examples
+   - Add fictional JSON export examples for intake, medication context and audit events.
+   - Do not connect to real healthcare systems.
+
 9. Optional AI adapters
-    - Add environment-variable-based adapters later.
-    - Keep mock mode as the default so the project runs without API keys.
+   - Add environment-variable-based adapters later.
+   - Keep mock mode as the default so the project runs without API keys.

@@ -31,7 +31,7 @@ The frontend calls the backend through `frontend/src/api.ts`. The API base URL d
 
 The ASP.NET Core API exposes minimal endpoints for intake creation, summary generation, review queue and audit history. Endpoint handlers run request validation, return consistent error responses and delegate workflow rules to `IntakeWorkflowService`. Swagger/OpenAPI is available at `/swagger` for local endpoint inspection.
 
-Keeping validation, mapping and workflow logic separated makes the code easier to scan in an interview:
+Keeping validation, mapping and workflow logic separated makes the code easier to inspect and maintain:
 
 - Request and response shapes live in `Contracts`.
 - Validation lives in `IntakeRequestValidator`.
@@ -65,6 +65,19 @@ This keeps the project runnable without API keys and makes tests stable.
 NSAID handling is one concrete OTC medication-context example, not the centre of the design. The layer is broader: it models how medication-history documentation gaps and review questions can be captured and routed to pharmacist/clinician review without making clinical decisions.
 
 This is not a prescribing tool, diagnosis tool, autonomous triage system or real drug-interaction engine. The documentation score is a completeness indicator only, not a clinical risk score.
+
+### Interoperability Concept
+
+The project includes a FHIR/HL7 integration concept document, but no live integration. The intent is to show how the internal workflow could later map to healthcare interoperability concepts while keeping the MVP small.
+
+Possible conceptual mappings include:
+
+- `Intake` to form/referral concepts such as `QuestionnaireResponse`, `ServiceRequest`, or an internal case/task model
+- `MedicationEntry` to `MedicationStatement`
+- `ReviewStatus` to workflow state such as `Task.status`
+- `AuditLog` to `AuditEvent` or `Provenance`
+
+See [fhir-hl7-integration-concept.md](fhir-hl7-integration-concept.md) for the full mapping and safety boundaries.
 
 ## Workflow Rules
 
