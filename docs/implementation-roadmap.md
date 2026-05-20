@@ -20,25 +20,26 @@ This roadmap keeps the project progression deliberate. The goal is to make the a
 - Context Event model, API endpoints and UI for fictional text-source provenance
 - Evidence-linked risk flags and medication review signals with short source snippets
 - Mock transcript ingestion endpoint and UI using pasted fictional transcript text
+- Mock document/OCR text ingestion endpoint and UI using pasted fictional document text
 
 ## Next Build Sequence
 
-1. Mock document/OCR ingestion
-   - Add fictional document text ingestion for referral notes or medication lists.
-   - Do not process real patient documents.
-
-2. Optional FHIR-style export examples
+1. Optional FHIR-style export examples
    - Add fictional JSON export examples for intake, medication context and audit events.
    - Do not connect to real healthcare systems.
 
-3. Production deployment design
+2. Production deployment design
    - Document production concerns separately from local Docker Compose.
    - Include migrations, secrets, authentication, monitoring and environment-specific configuration.
 
-4. Optional AI adapters
+3. Optional AI adapters
    - Add environment-variable-based adapters later.
    - Keep mock mode as the default so the project runs without API keys.
 
-5. Optional speech-to-text adapter concept
+4. Optional speech-to-text adapter concept
    - Keep the implemented transcript path text-only by default.
+   - Document any future adapter as disabled unless explicitly configured.
+
+5. Optional OCR/document extraction adapter concept
+   - Keep the implemented document path pasted-text-only by default.
    - Document any future adapter as disabled unless explicitly configured.

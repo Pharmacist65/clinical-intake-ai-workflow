@@ -42,7 +42,7 @@ I also added a FHIR/HL7 concept document to show how the internal models could l
 
 The test suite also includes a small fictional evaluation dataset. Each case defines expected workflow behaviour, such as review routing, risk labels, medication review signals and medication documentation quality. I would describe this as regression testing for deterministic workflow rules, not as clinical validation.
 
-I also implemented the first small piece of the multimodal clinical context concept: `ContextEvent` records plus a mock transcript ingestion endpoint. These let the workflow store pasted fictional transcript text and other text-derived context sources with provenance, such as document text, medication-history notes or manual team notes. I would be careful with the wording: it is not an implemented audio, image, speech-to-text or OCR AI system.
+I also implemented the first small piece of the multimodal clinical context concept: `ContextEvent` records plus mock transcript and mock document-text ingestion endpoints. These let the workflow store pasted fictional transcript/document text and other text-derived context sources with provenance, such as medication-history notes or manual team notes. I would be careful with the wording: it is not an implemented audio, image, speech-to-text or OCR AI system.
 
 Review signals also carry short evidence snippets where deterministic rules matched source text. I would describe this as explainability for workflow review, not proof of clinical safety or diagnostic reasoning.
 
@@ -74,8 +74,8 @@ The next improvements I would discuss are:
 
 - Add an optional OpenAI adapter behind an interface while keeping mock mode as the default.
 - Add RAG over local clinical policy documents so generated suggestions are grounded in approved guidance.
-- Add mock document/OCR text ingestion using fictional data only.
 - Consider an optional speech-to-text adapter later, disabled by default and never required for the local demo.
+- Consider an optional OCR/document extraction adapter later, disabled by default and never required for the local demo.
 - Add role-based access control for reviewers and administrators.
 - Add production deployment documentation beyond the local Docker Compose setup.
 - Add structured observability for summary generation, review queue volume and failure modes.

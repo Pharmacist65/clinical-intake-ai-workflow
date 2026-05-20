@@ -96,6 +96,7 @@ public sealed class IntakeApiIntegrationTests : IClassFixture<ClinicalIntakeApiF
         Assert.Contains("/api/intakes", body, StringComparison.Ordinal);
         Assert.Contains("/api/intakes/{id}/context-events", body, StringComparison.Ordinal);
         Assert.Contains("/api/intakes/{id}/transcript-context", body, StringComparison.Ordinal);
+        Assert.Contains("/api/intakes/{id}/document-context", body, StringComparison.Ordinal);
         Assert.Contains("/api/intakes/{id}/medication-documentation-quality", body, StringComparison.Ordinal);
         Assert.Contains("Clinical Intake AI Workflow API", body, StringComparison.Ordinal);
     }
@@ -168,6 +169,40 @@ public sealed class IntakeApiIntegrationTests : IClassFixture<ClinicalIntakeApiF
         Assert.Equal("Mock family call transcript", contextEvent.SourceLabel);
         Assert.NotNull(contextEvent.MetadataJson);
         Assert.Contains("mock-transcript", contextEvent.MetadataJson, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task DocumentContextEndpoint_CreatesDocumentContextEvent()
+    {
+        var createResponse = await _client.PostAsJsonAsync("/api/intakes", new CreateIntakeRequest(
+            "API Patient Document",
+            10,
+            "Initial note says a fictional referral document is available.",
+            "api integration test",
+            "api-test"));
+        var created = await createResponse.Content.ReadFromJsonAsync<IntakeDetailResponse>();
+
+        Assert.NotNull(created);
+
+        var documentResponse = await _client.PostAsJsonAsync(
+            $"/api/intakes/{created.Id}/document-context",
+            new CreateDocumentContextRequest(
+                "Mock referral note",
+                "Fictional referral note describes school support needs and urgent sleep disruption.",
+                null,
+                "api-test",
+                0.87m,
+                "Referral note",
+                "page 1"));
+
+        Assert.Equal(HttpStatusCode.Created, documentResponse.StatusCode);
+        var contextEvent = await documentResponse.Content.ReadFromJsonAsync<ContextEventResponse>();
+
+        Assert.NotNull(contextEvent);
+        Assert.Equal("DocumentText", contextEvent.SourceType);
+        Assert.Equal("Mock referral note", contextEvent.SourceLabel);
+        Assert.NotNull(contextEvent.MetadataJson);
+        Assert.Contains("mock-document-ocr", contextEvent.MetadataJson, StringComparison.Ordinal);
     }
 
     [Fact]

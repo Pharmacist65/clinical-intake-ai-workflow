@@ -4,6 +4,7 @@ import type {
   ContextEvent,
   ContextSourceType,
   CreateContextEventPayload,
+  CreateDocumentContextPayload,
   CreateIntakePayload,
   CreateMedicationPayload,
   CreateTranscriptContextPayload,
@@ -65,6 +66,16 @@ const initialTranscriptContextForm: TranscriptContextFormState = {
   speakerContext: "Fictional family call"
 };
 
+const initialDocumentContextForm: DocumentContextFormState = {
+  documentLabel: "Mock referral note",
+  documentText: "",
+  capturedAt: "",
+  createdBy: "demo-user",
+  confidenceScore: "",
+  documentType: "Referral note",
+  pageReference: "page 1"
+};
+
 type ContextEventFormState = {
   sourceType: ContextSourceType;
   sourceLabel: string;
@@ -82,6 +93,16 @@ type TranscriptContextFormState = {
   createdBy: string;
   confidenceScore: string;
   speakerContext: string;
+};
+
+type DocumentContextFormState = {
+  documentLabel: string;
+  documentText: string;
+  capturedAt: string;
+  createdBy: string;
+  confidenceScore: string;
+  documentType: string;
+  pageReference: string;
 };
 
 type MedicationFormState = {
@@ -488,6 +509,7 @@ function ContextEventsSection({
 }) {
   const [form, setForm] = useState<ContextEventFormState>(initialContextEventForm);
   const [transcriptForm, setTranscriptForm] = useState<TranscriptContextFormState>(initialTranscriptContextForm);
+  const [documentForm, setDocumentForm] = useState<DocumentContextFormState>(initialDocumentContextForm);
 
   async function handleContextSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -505,6 +527,15 @@ function ContextEventsSection({
       return api.getIntake(intake.id);
     });
     setTranscriptForm(initialTranscriptContextForm);
+  }
+
+  async function handleDocumentSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await runAction(async () => {
+      await api.addDocumentContext(intake.id, toDocumentContextPayload(documentForm));
+      return api.getIntake(intake.id);
+    });
+    setDocumentForm(initialDocumentContextForm);
   }
 
   return (
@@ -579,6 +610,82 @@ function ContextEventsSection({
           <div className="form-actions">
             <button type="submit" disabled={busy}>
               Add mock transcript
+            </button>
+          </div>
+        </form>
+      </article>
+
+      <article className="subpanel document-ingestion">
+        <h3>Mock Document/OCR Text</h3>
+        <p className="muted">Paste fictional document text only. No OCR, image interpretation, diagnosis or autonomous triage is performed.</p>
+        <form className="context-form" onSubmit={handleDocumentSubmit}>
+          <div className="form-grid">
+            <label>
+              Document label
+              <input
+                required
+                value={documentForm.documentLabel}
+                onChange={(event) => setDocumentForm({ ...documentForm, documentLabel: event.target.value })}
+              />
+            </label>
+            <label>
+              Document type
+              <input
+                value={documentForm.documentType}
+                onChange={(event) => setDocumentForm({ ...documentForm, documentType: event.target.value })}
+                placeholder="Referral note, medication list, care summary..."
+              />
+            </label>
+            <label>
+              Page/reference
+              <input
+                value={documentForm.pageReference}
+                onChange={(event) => setDocumentForm({ ...documentForm, pageReference: event.target.value })}
+                placeholder="page 1, section 2..."
+              />
+            </label>
+            <label>
+              Captured at
+              <input
+                type="datetime-local"
+                value={documentForm.capturedAt}
+                onChange={(event) => setDocumentForm({ ...documentForm, capturedAt: event.target.value })}
+              />
+            </label>
+            <label>
+              Created by
+              <input
+                required
+                value={documentForm.createdBy}
+                onChange={(event) => setDocumentForm({ ...documentForm, createdBy: event.target.value })}
+              />
+            </label>
+            <label>
+              Confidence score
+              <input
+                min={0}
+                max={1}
+                step={0.01}
+                type="number"
+                value={documentForm.confidenceScore}
+                onChange={(event) => setDocumentForm({ ...documentForm, confidenceScore: event.target.value })}
+                placeholder="Optional, 0 to 1"
+              />
+            </label>
+          </div>
+          <label>
+            Document text
+            <textarea
+              required
+              rows={4}
+              value={documentForm.documentText}
+              onChange={(event) => setDocumentForm({ ...documentForm, documentText: event.target.value })}
+              placeholder="Fictional referral note or medication-list text copied from a safe non-patient example..."
+            />
+          </label>
+          <div className="form-actions">
+            <button type="submit" disabled={busy}>
+              Add mock document text
             </button>
           </div>
         </form>
@@ -1063,6 +1170,25 @@ function toTranscriptContextPayload(form: TranscriptContextFormState): CreateTra
     createdBy: form.createdBy.trim(),
     confidenceScore: confidence === null ? null : Number(confidence),
     speakerContext: clean(form.speakerContext)
+  };
+}
+
+function toDocumentContextPayload(form: DocumentContextFormState): CreateDocumentContextPayload {
+  const clean = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  };
+
+  const confidence = clean(form.confidenceScore);
+
+  return {
+    documentLabel: form.documentLabel.trim(),
+    documentText: form.documentText.trim(),
+    capturedAt: clean(form.capturedAt),
+    createdBy: form.createdBy.trim(),
+    confidenceScore: confidence === null ? null : Number(confidence),
+    documentType: clean(form.documentType),
+    pageReference: clean(form.pageReference)
   };
 }
 

@@ -1,6 +1,7 @@
 import type {
   ContextEvent,
   CreateContextEventPayload,
+  CreateDocumentContextPayload,
   CreateIntakePayload,
   CreateMedicationPayload,
   CreateTranscriptContextPayload,
@@ -56,6 +57,11 @@ export const api = {
     }),
   addTranscriptContext: (id: number, payload: CreateTranscriptContextPayload) =>
     request<ContextEvent>(`/api/intakes/${id}/transcript-context`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  addDocumentContext: (id: number, payload: CreateDocumentContextPayload) =>
+    request<ContextEvent>(`/api/intakes/${id}/document-context`, {
       method: "POST",
       body: JSON.stringify(payload)
     }),

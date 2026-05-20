@@ -246,6 +246,26 @@ app.MapPost("/api/intakes/{id:int}/transcript-context", async (
     .WithName("AddTranscriptContext")
     .WithTags("Context Events");
 
+app.MapPost("/api/intakes/{id:int}/document-context", async (
+    int id,
+    CreateDocumentContextRequest request,
+    IntakeWorkflowService workflow,
+    CancellationToken cancellationToken) =>
+{
+    var validation = IntakeRequestValidator.ValidateDocumentContext(request);
+    if (!validation.IsValid)
+    {
+        return ApiErrors.Validation(validation);
+    }
+
+    var contextEvent = await workflow.AddDocumentContextAsync(id, request, cancellationToken);
+    return contextEvent is null
+        ? ApiErrors.NotFound("Intake")
+        : Results.Created($"/api/intakes/{id}/context-events/{contextEvent.Id}", IntakeMapper.ToContextEventResponse(contextEvent));
+})
+    .WithName("AddDocumentContext")
+    .WithTags("Context Events");
+
 app.MapPost("/api/intakes/{id:int}/medications", async (
     int id,
     CreateMedicationEntryRequest request,

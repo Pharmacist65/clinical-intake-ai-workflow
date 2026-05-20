@@ -17,6 +17,15 @@ public sealed record CreateTranscriptContextRequest(
     decimal? ConfidenceScore,
     string? SpeakerContext);
 
+public sealed record CreateDocumentContextRequest(
+    string DocumentLabel,
+    string DocumentText,
+    DateTime? CapturedAt,
+    string CreatedBy,
+    decimal? ConfidenceScore,
+    string? DocumentType,
+    string? PageReference);
+
 public sealed record ContextEventResponse(
     int Id,
     int IntakeId,

@@ -92,6 +92,21 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
     }
 
     [Fact]
+    public void ValidateDocumentContext_WithMissingFields_ReturnsValidationErrors()
+    {
+        var validation = IntakeRequestValidator.ValidateDocumentContext(
+            new CreateDocumentContextRequest("", "", null, "", 1.2m, new string('x', 121), new string('x', 121)));
+
+        Assert.False(validation.IsValid);
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateDocumentContextRequest.DocumentLabel));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateDocumentContextRequest.DocumentText));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateDocumentContextRequest.CreatedBy));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateDocumentContextRequest.ConfidenceScore));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateDocumentContextRequest.DocumentType));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateDocumentContextRequest.PageReference));
+    }
+
+    [Fact]
     public async Task AddContextEventAsync_PersistsContextEventAndAuditLog()
     {
         var intake = await _workflow.CreateIntakeAsync(DefaultRequest());
@@ -128,6 +143,26 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
         Assert.NotNull(updated);
         Assert.Contains(updated.ContextEvents, item => item.Id == contextEvent.Id);
         Assert.Contains(updated.AuditLogs, log => log.Action == "TranscriptContextAdded");
+    }
+
+    [Fact]
+    public async Task AddDocumentContextAsync_PersistsDocumentEventAndAuditLog()
+    {
+        var intake = await _workflow.CreateIntakeAsync(DefaultRequest());
+
+        var contextEvent = await _workflow.AddDocumentContextAsync(
+            intake.Id,
+            DocumentRequest("Mock referral note", "Fictional referral note mentions school concerns and urgent sleep disruption."));
+
+        var updated = await _workflow.GetIntakeAsync(intake.Id);
+
+        Assert.NotNull(contextEvent);
+        Assert.Equal(ContextSourceType.DocumentText, contextEvent.SourceType);
+        Assert.NotNull(contextEvent.MetadataJson);
+        Assert.Contains("mock-document-ocr", contextEvent.MetadataJson);
+        Assert.NotNull(updated);
+        Assert.Contains(updated.ContextEvents, item => item.Id == contextEvent.Id);
+        Assert.Contains(updated.AuditLogs, log => log.Action == "DocumentContextAdded");
     }
 
     [Fact]
@@ -181,6 +216,28 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
             && flag.EvidenceSourceLabel == "Family call transcript"
             && flag.EvidenceSnippet != null
             && flag.EvidenceSnippet.Contains("crisis", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task GenerateSummaryAsync_UsesDocumentContextForEvidenceLinkedReviewSignals()
+    {
+        var intake = await _workflow.CreateIntakeAsync(DefaultRequest("Brief unclear family note."));
+        await _workflow.AddDocumentContextAsync(
+            intake.Id,
+            DocumentRequest(
+                "Mock referral note",
+                "The fictional referral note describes safeguarding concerns and severe sleep disruption."));
+
+        var updated = await _workflow.GenerateSummaryAsync(intake.Id, "test");
+
+        Assert.NotNull(updated);
+        Assert.Equal(ReviewStatus.NeedsReview, updated.ReviewStatus);
+        Assert.Contains(updated.RiskFlags, flag =>
+            flag.Severity == RiskSeverity.High
+            && flag.EvidenceSourceType == ContextSourceType.DocumentText
+            && flag.EvidenceSourceLabel == "Mock referral note"
+            && flag.EvidenceSnippet != null
+            && flag.EvidenceSnippet.Contains("safeguarding", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -461,6 +518,20 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
             "demo-user",
             0.9m,
             speakerContext);
+
+    private static CreateDocumentContextRequest DocumentRequest(
+        string documentLabel,
+        string documentText,
+        string? documentType = "Mock referral note",
+        string? pageReference = "page 1") =>
+        new(
+            documentLabel,
+            documentText,
+            null,
+            "demo-user",
+            0.86m,
+            documentType,
+            pageReference);
 
     private static CreateMedicationEntryRequest MedicationRequest(
         string medicationName,

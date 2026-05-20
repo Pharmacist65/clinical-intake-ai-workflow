@@ -22,7 +22,7 @@ The React/Vite frontend is intentionally small. It provides:
 - Dashboard counts for `New`, `NeedsReview` and `Reviewed`
 - Intake creation form
 - Intake detail view with original text, summary, risk flags and audit log
-- Mock transcript ingestion form, context source form and captured context list
+- Mock transcript ingestion form, mock document/OCR text form, context source form and captured context list
 - Medication context form, medication timeline, documentation quality summary and medication review signals
 - Optional reviewer note input when marking a case reviewed
 - Review queue for cases that require human attention
@@ -100,7 +100,7 @@ See [fhir-hl7-integration-concept.md](fhir-hl7-integration-concept.md) for the f
 
 ### Multimodal Clinical Context Concept
 
-The project implements a small first step toward the multimodal clinical context concept: text-derived context from multiple sources can be recorded as `ContextEvent` records. A dedicated mock transcript endpoint stores pasted fictional transcript text as `TranscriptText`; the generic context endpoint can also store document/OCR text, medication-history notes and manual team notes.
+The project implements a small first step toward the multimodal clinical context concept: text-derived context from multiple sources can be recorded as `ContextEvent` records. Dedicated mock transcript and mock document endpoints store pasted fictional source text as `TranscriptText` and `DocumentText`; the generic context endpoint can also store medication-history notes and manual team notes.
 
 This is still text-only workflow support. The current application does not process audio, clinical images, scanned documents, real patient records or live healthcare feeds. Real speech-to-text and OCR adapters remain planned only. The current implementation preserves source provenance and includes evidence snippets on deterministic risk flags and medication review signals so reviewers can inspect why a workflow prompt was created.
 
@@ -138,8 +138,8 @@ sequenceDiagram
     API->>Workflow: GenerateSummaryAsync
     Workflow->>AI: Generate deterministic summary
     Workflow->>DB: Save summary, flags, status and audit log
-    User->>UI: Add mock transcript or context source
-    UI->>API: POST /api/intakes/{id}/transcript-context or /context-events
+    User->>UI: Add mock transcript, document text or context source
+    UI->>API: POST /api/intakes/{id}/transcript-context, /document-context or /context-events
     Workflow->>DB: Save context event and audit log
     User->>UI: Add medication context
     UI->>API: POST /api/intakes/{id}/medications

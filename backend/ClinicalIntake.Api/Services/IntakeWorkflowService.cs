@@ -192,6 +192,52 @@ public sealed class IntakeWorkflowService(
         return contextEvent;
     }
 
+    public async Task<ContextEvent?> AddDocumentContextAsync(
+        int intakeId,
+        CreateDocumentContextRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var validation = IntakeRequestValidator.ValidateDocumentContext(request);
+        if (!validation.IsValid)
+        {
+            throw new ArgumentException(validation.Errors[0].Message);
+        }
+
+        var intake = await db.Intakes
+            .Include(existing => existing.AuditLogs)
+            .FirstOrDefaultAsync(existing => existing.Id == intakeId, cancellationToken);
+
+        if (intake is null)
+        {
+            return null;
+        }
+
+        var contextEvent = new ContextEvent
+        {
+            IntakeId = intakeId,
+            SourceType = ContextSourceType.DocumentText,
+            SourceLabel = request.DocumentLabel.Trim(),
+            Content = request.DocumentText.Trim(),
+            CapturedAt = request.CapturedAt ?? DateTime.UtcNow,
+            CreatedBy = request.CreatedBy.Trim(),
+            ConfidenceScore = request.ConfidenceScore,
+            MetadataJson = BuildDocumentMetadata(request.DocumentType, request.PageReference),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        db.ContextEvents.Add(contextEvent);
+        intake.AuditLogs.Add(new AuditLog
+        {
+            Action = "DocumentContextAdded",
+            Actor = contextEvent.CreatedBy,
+            Timestamp = DateTime.UtcNow,
+            Details = $"Mock document/OCR text context recorded for workflow support: {contextEvent.SourceLabel}."
+        });
+
+        await db.SaveChangesAsync(cancellationToken);
+        return contextEvent;
+    }
+
     public async Task<MedicationEntry?> AddMedicationAsync(
         int intakeId,
         CreateMedicationEntryRequest request,
@@ -462,6 +508,17 @@ public sealed class IntakeWorkflowService(
         {
             mode = "mock-transcript",
             speakerContext = cleanedSpeakerContext,
+            safetyScope = "workflow-support-only-no-diagnosis"
+        });
+    }
+
+    private static string BuildDocumentMetadata(string? documentType, string? pageReference)
+    {
+        return JsonSerializer.Serialize(new
+        {
+            mode = "mock-document-ocr",
+            documentType = CleanOptional(documentType),
+            pageReference = CleanOptional(pageReference),
             safetyScope = "workflow-support-only-no-diagnosis"
         });
     }

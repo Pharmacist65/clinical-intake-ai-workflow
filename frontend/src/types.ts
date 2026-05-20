@@ -175,3 +175,13 @@ export interface CreateTranscriptContextPayload {
   confidenceScore: number | null;
   speakerContext: string | null;
 }
+
+export interface CreateDocumentContextPayload {
+  documentLabel: string;
+  documentText: string;
+  capturedAt: string | null;
+  createdBy: string;
+  confidenceScore: number | null;
+  documentType: string | null;
+  pageReference: string | null;
+}
