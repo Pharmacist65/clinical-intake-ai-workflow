@@ -38,6 +38,9 @@ public sealed record MedicationSignalResponse(
     string Severity,
     string Rationale,
     string ReviewerQuestion,
+    string? EvidenceSourceType,
+    string? EvidenceSourceLabel,
+    string? EvidenceSnippet,
     DateTime CreatedAt);
 
 public sealed record MedicationDocumentationQualityResponse(

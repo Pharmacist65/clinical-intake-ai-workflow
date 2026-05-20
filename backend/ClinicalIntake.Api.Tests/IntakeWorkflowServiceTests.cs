@@ -137,7 +137,12 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
 
         Assert.NotNull(updated);
         Assert.Equal(ReviewStatus.NeedsReview, updated.ReviewStatus);
-        Assert.Contains(updated.RiskFlags, flag => flag.Severity == RiskSeverity.High);
+        Assert.Contains(updated.RiskFlags, flag =>
+            flag.Severity == RiskSeverity.High
+            && flag.EvidenceSourceType == ContextSourceType.IntakeText
+            && flag.EvidenceSourceLabel == "Original intake text"
+            && flag.EvidenceSnippet != null
+            && flag.EvidenceSnippet.Contains("self-harm", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -259,7 +264,12 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
 
         Assert.NotNull(updated);
         Assert.Contains(updated.MedicationSignals, signal =>
-            signal.Label == "OTC NSAID context" && signal.Severity == RiskSeverity.Medium);
+            signal.Label == "OTC NSAID context"
+            && signal.Severity == RiskSeverity.Medium
+            && signal.EvidenceSourceType == ContextSourceType.MedicationHistory
+            && signal.EvidenceSourceLabel == "Ibuprofen"
+            && signal.EvidenceSnippet != null
+            && signal.EvidenceSnippet.Contains("Ibuprofen", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

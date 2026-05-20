@@ -63,6 +63,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(flag => flag.Label).HasMaxLength(120).IsRequired();
             entity.Property(flag => flag.Severity).HasConversion<string>().HasMaxLength(40);
             entity.Property(flag => flag.Reason).HasMaxLength(1000).IsRequired();
+            entity.Property(flag => flag.EvidenceSourceType).HasConversion<string>().HasMaxLength(40);
+            entity.Property(flag => flag.EvidenceSourceLabel).HasMaxLength(120);
+            entity.Property(flag => flag.EvidenceSnippet).HasMaxLength(500);
         });
 
         modelBuilder.Entity<ContextEvent>(entity =>
@@ -94,6 +97,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(signal => signal.Severity).HasConversion<string>().HasMaxLength(40);
             entity.Property(signal => signal.Rationale).HasMaxLength(1000).IsRequired();
             entity.Property(signal => signal.ReviewerQuestion).HasMaxLength(1000).IsRequired();
+            entity.Property(signal => signal.EvidenceSourceType).HasConversion<string>().HasMaxLength(40);
+            entity.Property(signal => signal.EvidenceSourceLabel).HasMaxLength(120);
+            entity.Property(signal => signal.EvidenceSnippet).HasMaxLength(500);
             entity.HasOne(signal => signal.MedicationEntry)
                 .WithMany(medication => medication.MedicationSignals)
                 .HasForeignKey(signal => signal.MedicationEntryId)

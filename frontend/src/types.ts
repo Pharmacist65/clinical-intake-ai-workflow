@@ -51,6 +51,9 @@ export interface RiskFlag {
   label: string;
   severity: RiskSeverity;
   reason: string;
+  evidenceSourceType: ContextSourceType | null;
+  evidenceSourceLabel: string | null;
+  evidenceSnippet: string | null;
 }
 
 export interface AuditLog {
@@ -101,6 +104,9 @@ export interface MedicationSignal {
   severity: RiskSeverity;
   rationale: string;
   reviewerQuestion: string;
+  evidenceSourceType: ContextSourceType | null;
+  evidenceSourceLabel: string | null;
+  evidenceSnippet: string | null;
   createdAt: string;
 }
 

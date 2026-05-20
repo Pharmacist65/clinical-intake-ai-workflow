@@ -5,6 +5,9 @@ namespace ClinicalIntake.Api.Services;
 
 public sealed class MockAiSummaryService : IAiSummaryService
 {
+    private const string IntakeEvidenceSourceLabel = "Original intake text";
+    private const int EvidenceSnippetRadius = 70;
+
     private static readonly string[] HighRiskTerms =
     [
         "self-harm",
@@ -24,9 +27,10 @@ public sealed class MockAiSummaryService : IAiSummaryService
 
     public AiSummaryResult Generate(Intake intake)
     {
-        var text = intake.IntakeText.ToLowerInvariant();
+        var sourceText = intake.IntakeText;
+        var text = sourceText.ToLowerInvariant();
         var concerns = BuildPresentingConcerns(text);
-        var riskFlags = BuildRiskFlags(text);
+        var riskFlags = BuildRiskFlags(sourceText);
         var highRiskFound = riskFlags.Any(flag => flag.Severity == RiskSeverity.High);
         var mediumRiskFound = riskFlags.Any(flag => flag.Severity == RiskSeverity.Medium);
         var confidenceScore = CalculateConfidenceScore(text, concerns, highRiskFound);
@@ -93,7 +97,10 @@ public sealed class MockAiSummaryService : IAiSummaryService
             {
                 Label = "Potential immediate safety or safeguarding concern",
                 Severity = RiskSeverity.High,
-                Reason = "The intake contains high-priority terms such as self-harm, suicidal, harm, abuse, or safeguarding."
+                Reason = "The intake contains high-priority terms such as self-harm, suicidal, harm, abuse, or safeguarding.",
+                EvidenceSourceType = ContextSourceType.IntakeText,
+                EvidenceSourceLabel = IntakeEvidenceSourceLabel,
+                EvidenceSnippet = FindEvidenceSnippet(text, HighRiskTerms)
             });
         }
 
@@ -103,7 +110,10 @@ public sealed class MockAiSummaryService : IAiSummaryService
             {
                 Label = "Crisis language",
                 Severity = RiskSeverity.High,
-                Reason = "The intake uses crisis language and should be checked promptly by a qualified clinician."
+                Reason = "The intake uses crisis language and should be checked promptly by a qualified clinician.",
+                EvidenceSourceType = ContextSourceType.IntakeText,
+                EvidenceSourceLabel = IntakeEvidenceSourceLabel,
+                EvidenceSnippet = FindEvidenceSnippet(text, ["crisis"])
             });
         }
         else if (UrgencyTerms.Any(term => ContainsTerm(text, term)))
@@ -112,7 +122,10 @@ public sealed class MockAiSummaryService : IAiSummaryService
             {
                 Label = "Urgency language",
                 Severity = RiskSeverity.Medium,
-                Reason = "The intake includes words such as urgent or severe, which may indicate a higher-priority workflow."
+                Reason = "The intake includes words such as urgent or severe, which may indicate a higher-priority workflow.",
+                EvidenceSourceType = ContextSourceType.IntakeText,
+                EvidenceSourceLabel = IntakeEvidenceSourceLabel,
+                EvidenceSnippet = FindEvidenceSnippet(text, UrgencyTerms)
             });
         }
 
@@ -122,7 +135,10 @@ public sealed class MockAiSummaryService : IAiSummaryService
             {
                 Label = "Functional impact",
                 Severity = RiskSeverity.Low,
-                Reason = "Sleep disruption or repeated distress is mentioned and may affect daily functioning."
+                Reason = "Sleep disruption or repeated distress is mentioned and may affect daily functioning.",
+                EvidenceSourceType = ContextSourceType.IntakeText,
+                EvidenceSourceLabel = IntakeEvidenceSourceLabel,
+                EvidenceSnippet = FindEvidenceSnippet(text, ["sleep", "meltdown"])
             });
         }
 
@@ -190,6 +206,41 @@ public sealed class MockAiSummaryService : IAiSummaryService
     private static bool ContainsTerm(string text, string term)
     {
         var pattern = $@"\b{Regex.Escape(term)}\b";
-        return Regex.IsMatch(text, pattern, RegexOptions.CultureInvariant);
+        return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    }
+
+    private static string? FindEvidenceSnippet(string text, IEnumerable<string> terms)
+    {
+        foreach (var term in terms)
+        {
+            var pattern = $@"\b{Regex.Escape(term)}\b";
+            var match = Regex.Match(text, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            if (match.Success)
+            {
+                return BuildSnippet(text, match.Index, match.Length);
+            }
+        }
+
+        return null;
+    }
+
+    private static string BuildSnippet(string text, int matchIndex, int matchLength)
+    {
+        var start = Math.Max(0, matchIndex - EvidenceSnippetRadius);
+        var end = Math.Min(text.Length, matchIndex + matchLength + EvidenceSnippetRadius);
+        var snippet = text[start..end].Trim();
+        snippet = Regex.Replace(snippet, @"\s+", " ");
+
+        if (start > 0)
+        {
+            snippet = $"... {snippet}";
+        }
+
+        if (end < text.Length)
+        {
+            snippet = $"{snippet} ...";
+        }
+
+        return snippet;
     }
 }

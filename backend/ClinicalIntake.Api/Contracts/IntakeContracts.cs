@@ -55,7 +55,10 @@ public sealed record RiskFlagResponse(
     int IntakeId,
     string Label,
     string Severity,
-    string Reason);
+    string Reason,
+    string? EvidenceSourceType,
+    string? EvidenceSourceLabel,
+    string? EvidenceSnippet);
 
 public sealed record ReviewQueueItemResponse(
     int Id,

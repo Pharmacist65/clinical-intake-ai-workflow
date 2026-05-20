@@ -44,6 +44,8 @@ The test suite also includes a small fictional evaluation dataset. Each case def
 
 I also implemented the first small piece of the multimodal clinical context concept: `ContextEvent` records. These let the workflow store fictional text-derived context sources with provenance, such as transcript text, document text, medication-history notes or manual team notes. I would be careful with the wording: it is not an implemented audio, image or OCR AI system.
 
+Review signals also carry short evidence snippets where deterministic rules matched source text. I would describe this as explainability for workflow review, not proof of clinical safety or diagnostic reasoning.
+
 ## AI Safety
 
 The AI component is deliberately constrained. It does not make clinical decisions. It produces a structured summary, flags configured terms and adds a safety disclaimer.
@@ -72,7 +74,6 @@ The next improvements I would discuss are:
 
 - Add an optional OpenAI adapter behind an interface while keeping mock mode as the default.
 - Add RAG over local clinical policy documents so generated suggestions are grounded in approved guidance.
-- Add evidence-linked review signals so prompts can point back to the source snippet that triggered them.
 - Add mock transcript and document/OCR text ingestion using fictional data only.
 - Add role-based access control for reviewers and administrators.
 - Add production deployment documentation beyond the local Docker Compose setup.

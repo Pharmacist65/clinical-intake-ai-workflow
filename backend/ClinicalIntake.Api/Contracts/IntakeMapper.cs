@@ -98,6 +98,9 @@ public static class IntakeMapper
             signal.Severity.ToString(),
             signal.Rationale,
             signal.ReviewerQuestion,
+            signal.EvidenceSourceType?.ToString(),
+            signal.EvidenceSourceLabel,
+            signal.EvidenceSnippet,
             signal.CreatedAt);
 
     public static MedicationDocumentationQualityResponse ToMedicationDocumentationQualityResponse(
@@ -122,7 +125,15 @@ public static class IntakeMapper
             summary.Disclaimer);
 
     private static RiskFlagResponse ToRiskFlagResponse(RiskFlag flag) =>
-        new(flag.Id, flag.IntakeId, flag.Label, flag.Severity.ToString(), flag.Reason);
+        new(
+            flag.Id,
+            flag.IntakeId,
+            flag.Label,
+            flag.Severity.ToString(),
+            flag.Reason,
+            flag.EvidenceSourceType?.ToString(),
+            flag.EvidenceSourceLabel,
+            flag.EvidenceSnippet);
 
     public static ContextEventResponse ToContextEventResponse(ContextEvent contextEvent) =>
         new(

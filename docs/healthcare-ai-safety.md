@@ -40,6 +40,7 @@ The reviewer can inspect:
 - Original intake text
 - AI-style structured summary
 - Risk flags and reasons
+- Evidence snippets for deterministic review signals
 - Confidence score
 - Captured context sources and source labels
 - Medication timeline and medication review questions
@@ -79,6 +80,8 @@ Urgency terms include:
 - `severe`
 
 These rules are intentionally simple. They are not a clinical risk model, and absence of a flag does not mean absence of risk.
+
+Evidence snippets show the local source text that matched a deterministic rule. They are included to support human review and auditability. They are not clinical proof, diagnostic reasoning, or a complete safety assessment.
 
 ## Disclaimer
 

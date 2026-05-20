@@ -435,6 +435,26 @@ textarea {
   font-weight: 700;
 }
 
+.evidence-snippet {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+}
+
+.evidence-snippet small {
+  color: #667085;
+  font-weight: 800;
+}
+
+.evidence-snippet p {
+  color: #334155;
+  margin: 0;
+}
+
 .summary-row {
   border-bottom: 1px solid #edf1f7;
   padding-bottom: 0.75rem;

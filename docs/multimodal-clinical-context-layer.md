@@ -70,9 +70,9 @@ These endpoints store and list fictional text context only. They do not run tran
 
 ## Evidence-Linked Review Signals
 
-Future review signals should point back to short evidence snippets instead of appearing as unsupported alerts.
+Risk flags and medication review signals include short evidence snippets instead of appearing as unsupported alerts.
 
-Example future shape:
+Example shape:
 
 ```json
 {
@@ -86,7 +86,7 @@ Example future shape:
 }
 ```
 
-The evidence snippet should help the reviewer understand why the prompt exists. It should not be framed as a diagnosis, treatment recommendation or drug-interaction result.
+The evidence snippet helps the reviewer understand why the prompt exists. It should not be framed as a diagnosis, treatment recommendation, drug-interaction result, or proof that no other risk exists.
 
 ## Workflow
 
@@ -117,11 +117,10 @@ Safety should come from:
 
 ## Future Implementation Steps
 
-1. Add evidence snippets to generated review signals.
-2. Add a mock transcript text ingestion endpoint.
-3. Add a mock document/OCR text ingestion endpoint.
-4. Extend the fictional evaluation dataset with context-event scenarios.
-5. Add optional adapters for transcription, OCR or LLM extraction only after the mock workflow is stable.
+1. Add a mock transcript text ingestion endpoint.
+2. Add a mock document/OCR text ingestion endpoint.
+3. Extend the fictional evaluation dataset with context-event scenarios.
+4. Add optional adapters for transcription, OCR or LLM extraction only after the mock workflow is stable.
 
 Each step should keep fictional data, human review and auditability as default design constraints.
 

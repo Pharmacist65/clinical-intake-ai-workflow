@@ -31,6 +31,7 @@ This application focuses on that workflow:
 - Database-backed workflow: SQLite with Entity Framework Core models for intakes, summaries, risk flags, and audit logs
 - Pharmacy context layer: medication-history capture, documentation quality checks, pharmacist-review signals, and medication timeline
 - Context source provenance: fictional text-derived context sources can be stored with source type, label, author, timing, confidence, and audit history
+- Evidence-linked review signals: risk flags and medication signals include short source snippets when deterministic rules are triggered
 - Safe applied AI design: deterministic mock AI, no API keys required, confidence scoring, disclaimers, and constrained output
 - Human-in-the-loop review: high-risk or low-confidence cases are routed to `NeedsReview`
 - Auditability: intake creation, summary generation, medication context analysis, review notes, and review status updates are recorded
@@ -109,7 +110,7 @@ This is documentation only. The current application does not connect to NHS syst
 
 The project implements a small first step toward the multimodal clinical context concept: fictional text-derived context sources can be recorded as `ContextEvent` records with source type, source label, content, captured time, author, optional confidence score, and optional metadata.
 
-This is still text-only workflow support. The current application does not process audio, clinical images, scanned documents, real patient records, or live healthcare feeds. Future transcript/OCR/LLM adapters remain planned only. The concept focuses on preserving source provenance, linking future review signals to short evidence snippets, and routing prompts to qualified human review.
+This is still text-only workflow support. The current application does not process audio, clinical images, scanned documents, real patient records, or live healthcare feeds. Future transcript/OCR/LLM adapters remain planned only. The concept focuses on preserving source provenance, linking review signals to short evidence snippets, and routing prompts to qualified human review.
 
 See [docs/multimodal-clinical-context-layer.md](docs/multimodal-clinical-context-layer.md) for the implemented `ContextEvent` model, evidence-linked review signal concept, safety boundaries, and future implementation sequence.
 
@@ -409,6 +410,9 @@ Example response:
 - `label`
 - `severity`: `Low`, `Medium`, `High`
 - `reason`
+- `evidenceSourceType`
+- `evidenceSourceLabel`
+- `evidenceSnippet`
 
 ### ContextEvent
 
@@ -459,6 +463,9 @@ Example response:
 - `severity`: `Low`, `Medium`, `High`
 - `rationale`
 - `reviewerQuestion`
+- `evidenceSourceType`
+- `evidenceSourceLabel`
+- `evidenceSnippet`
 - `createdAt`
 
 ### MedicationDocumentationQuality
@@ -484,6 +491,7 @@ The app is intentionally constrained:
 - It stores additional context sources with provenance instead of hiding them behind AI output.
 - It uses deterministic mock AI rules in this version.
 - It includes a confidence score and safety disclaimer.
+- It shows evidence snippets for generated review signals where a deterministic rule matched source text.
 - High-risk keywords route the case to human review.
 - Low-confidence summaries route the case to human review.
 - Medication outputs are review signals and questions only.
@@ -502,6 +510,7 @@ Generated summaries always include:
 - The medication context layer is not a real drug-interaction engine.
 - The pharmacy context feature does not perform medication reconciliation, drug interaction checking, clinical decision support, prescribing advice, or diagnosis.
 - Context events are manually entered fictional text sources only; there is no real audio, OCR, image interpretation, or document processing pipeline.
+- Evidence snippets explain why a workflow prompt was created; they are not clinical proof or a complete safety assessment.
 - Keyword rules are simplistic and will miss clinical nuance.
 - Absence of a risk flag does not mean absence of clinical risk.
 - No authentication, role-based access control, or production security hardening is implemented.
@@ -515,7 +524,6 @@ Planned improvements, not currently implemented:
 - Real LLM integration via API with an environment-variable based adapter
 - Retrieval-augmented generation over approved clinical policy documents
 - FHIR/HL7 adapter prototypes using fictional example payloads
-- Evidence-linked review signals with source snippets
 - Mock transcript and document/OCR text ingestion using fictional data
 - Role-based access control
 - Production deployment design

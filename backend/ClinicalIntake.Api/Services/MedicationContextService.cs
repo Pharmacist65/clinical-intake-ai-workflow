@@ -8,6 +8,8 @@ public sealed class MedicationContextService
     public const string DocumentationQualityDisclaimer =
         "Medication documentation quality reflects completeness of captured medication-history fields only. It is not a clinical risk score, diagnosis, prescribing recommendation, medication reconciliation, drug-interaction check, or clinical decision support.";
 
+    private const int EvidenceSnippetRadius = 70;
+
     private static readonly string[] NsaidTerms =
     [
         "ibuprofen",
@@ -58,7 +60,10 @@ public sealed class MedicationContextService
                 RiskSeverity.Medium,
                 "Medication name includes an NSAID/OTC NSAID term. This is a workflow support signal only.",
                 "Confirm dose, duration, reason for use, and whether a pharmacist/clinician review is needed.",
-                now));
+                now,
+                ContextSourceType.MedicationHistory,
+                medication.MedicationName,
+                FindEvidenceSnippet(BuildMedicationEvidenceText(medication), NsaidTerms) ?? BuildMedicationEvidenceText(medication)));
         }
 
         AddMedicationSafetySignalIfNeeded(intake, nsaidEntries, signals, now);
@@ -144,7 +149,10 @@ public sealed class MedicationContextService
             RiskSeverity.High,
             "NSAID context appears alongside medical or medication-history terms that should be clarified by a qualified professional. This does not infer causality.",
             "Review NSAID context and relevant medical/medication history with a qualified clinician or pharmacist.",
-            now));
+            now,
+            nsaidContextEntry is null ? ContextSourceType.IntakeText : ContextSourceType.MedicationHistory,
+            nsaidContextEntry?.MedicationName ?? "Original intake text",
+            FindEvidenceSnippet(contextText, NsaidTerms.Concat(SafetyContextTerms)) ?? TrimEvidenceSnippet(contextText)));
     }
 
     private static void AddIncompleteHistorySignals(
@@ -163,7 +171,10 @@ public sealed class MedicationContextService
                 RiskSeverity.Low,
                 "A current or recent medication is missing dose or frequency documentation.",
                 "Clarify dose, frequency, timing, and whether the medication is current or historical.",
-                now));
+                now,
+                ContextSourceType.MedicationHistory,
+                medication.MedicationName,
+                BuildMedicationDocumentationSnippet(medication)));
         }
     }
 
@@ -185,7 +196,10 @@ public sealed class MedicationContextService
             RiskSeverity.Medium,
             "Five or more current medications are documented. This is a documentation and review signal only.",
             "Consider pharmacist review of current medication list and documentation quality.",
-            now));
+            now,
+            ContextSourceType.MedicationHistory,
+            "Current medication list",
+            $"Current medications documented: {string.Join(", ", intake.MedicationEntries.Where(medication => medication.Category == MedicationCategory.Current).Select(medication => medication.MedicationName).Take(8))}."));
     }
 
     private static void AddHouseholdMedicationSignals(
@@ -208,7 +222,10 @@ public sealed class MedicationContextService
                 RiskSeverity.Low,
                 "Medication is documented as family or household context for a child intake.",
                 "Clarify whether the medication belongs to the patient, caregiver, or household only.",
-                now));
+                now,
+                ContextSourceType.MedicationHistory,
+                medication.MedicationName,
+                BuildMedicationEvidenceText(medication)));
         }
     }
 
@@ -227,7 +244,10 @@ public sealed class MedicationContextService
                 RiskSeverity.High,
                 "Medication notes include allergy, reaction, or possible adverse-effect language that should be clarified. This does not diagnose an allergy.",
                 "Clarify allergy/adverse reaction history and ensure clinician/pharmacist review.",
-                now));
+                now,
+                ContextSourceType.MedicationHistory,
+                medication.MedicationName,
+                FindEvidenceSnippet(BuildMedicationEvidenceText(medication), AdverseReactionTerms) ?? BuildMedicationEvidenceText(medication)));
         }
     }
 
@@ -238,7 +258,10 @@ public sealed class MedicationContextService
         RiskSeverity severity,
         string rationale,
         string reviewerQuestion,
-        DateTime createdAt) =>
+        DateTime createdAt,
+        ContextSourceType? evidenceSourceType = null,
+        string? evidenceSourceLabel = null,
+        string? evidenceSnippet = null) =>
         new()
         {
             IntakeId = intakeId,
@@ -247,6 +270,9 @@ public sealed class MedicationContextService
             Severity = severity,
             Rationale = rationale,
             ReviewerQuestion = reviewerQuestion,
+            EvidenceSourceType = evidenceSourceType,
+            EvidenceSourceLabel = evidenceSourceLabel,
+            EvidenceSnippet = evidenceSnippet,
             CreatedAt = createdAt
         };
 
@@ -359,6 +385,73 @@ public sealed class MedicationContextService
             field,
             reason));
         return penalty;
+    }
+
+    private static string BuildMedicationEvidenceText(MedicationEntry medication)
+    {
+        var parts = new[]
+        {
+            medication.MedicationName,
+            medication.Category.ToString(),
+            medication.Dose,
+            medication.Frequency,
+            medication.Route,
+            medication.ReasonForUse,
+            medication.Notes
+        };
+
+        return TrimEvidenceSnippet(string.Join(" | ", parts.Where(part => !string.IsNullOrWhiteSpace(part))));
+    }
+
+    private static string BuildMedicationDocumentationSnippet(MedicationEntry medication)
+    {
+        var dose = string.IsNullOrWhiteSpace(medication.Dose) ? "dose not documented" : $"dose {medication.Dose}";
+        var frequency = string.IsNullOrWhiteSpace(medication.Frequency)
+            ? "frequency not documented"
+            : $"frequency {medication.Frequency}";
+
+        return TrimEvidenceSnippet($"{medication.MedicationName} | {medication.Category} | {dose} | {frequency}");
+    }
+
+    private static string? FindEvidenceSnippet(string text, IEnumerable<string> terms)
+    {
+        foreach (var term in terms)
+        {
+            var pattern = $@"\b{Regex.Escape(term)}\b";
+            var match = Regex.Match(text, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            if (match.Success)
+            {
+                return BuildSnippet(text, match.Index, match.Length);
+            }
+        }
+
+        return null;
+    }
+
+    private static string BuildSnippet(string text, int matchIndex, int matchLength)
+    {
+        var start = Math.Max(0, matchIndex - EvidenceSnippetRadius);
+        var end = Math.Min(text.Length, matchIndex + matchLength + EvidenceSnippetRadius);
+        var snippet = text[start..end].Trim();
+        snippet = Regex.Replace(snippet, @"\s+", " ");
+
+        if (start > 0)
+        {
+            snippet = $"... {snippet}";
+        }
+
+        if (end < text.Length)
+        {
+            snippet = $"{snippet} ...";
+        }
+
+        return snippet;
+    }
+
+    private static string TrimEvidenceSnippet(string text)
+    {
+        var snippet = Regex.Replace(text.Trim(), @"\s+", " ");
+        return snippet.Length <= 500 ? snippet : $"{snippet[..497]}...";
     }
 
     private static bool ContainsAny(string text, IEnumerable<string> terms) =>

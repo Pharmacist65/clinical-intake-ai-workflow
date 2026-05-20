@@ -102,7 +102,7 @@ See [fhir-hl7-integration-concept.md](fhir-hl7-integration-concept.md) for the f
 
 The project implements a small first step toward the multimodal clinical context concept: text-derived context from multiple sources can be recorded as `ContextEvent` records. Supported source types include intake text, voice transcript text, document/OCR text, medication-history notes and manual team notes.
 
-This is still text-only workflow support. The current application does not process audio, clinical images, scanned documents, real patient records or live healthcare feeds. Future transcript/OCR adapters remain planned only. The current implementation preserves source provenance and prepares the ground for evidence-linked review signals so future prompts can point back to the text that triggered them.
+This is still text-only workflow support. The current application does not process audio, clinical images, scanned documents, real patient records or live healthcare feeds. Future transcript/OCR adapters remain planned only. The current implementation preserves source provenance and includes evidence snippets on deterministic risk flags and medication review signals so reviewers can inspect why a workflow prompt was created.
 
 See [multimodal-clinical-context-layer.md](multimodal-clinical-context-layer.md) for the proposed model, workflow and safety boundaries.
 
@@ -113,6 +113,7 @@ See [multimodal-clinical-context-layer.md](multimodal-clinical-context-layer.md)
 - If the confidence score is below `0.75`, the intake is routed to `NeedsReview`.
 - If any risk flag is `High`, the intake is routed to `NeedsReview`.
 - If any medication signal is `High`, the intake is routed to `NeedsReview`.
+- Risk flags and medication signals can include an evidence source label and short snippet for reviewer inspection.
 - Context events are provenance records only; they do not change review status by themselves.
 - Review status changes are appended to the audit log with an optional workflow review note.
 

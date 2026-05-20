@@ -427,6 +427,11 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
                   <div>
                     <strong>{flag.label}</strong>
                     <p>{flag.reason}</p>
+                    <EvidenceSnippet
+                      sourceType={flag.evidenceSourceType}
+                      sourceLabel={flag.evidenceSourceLabel}
+                      snippet={flag.evidenceSnippet}
+                    />
                   </div>
                 </div>
               ))}
@@ -802,6 +807,11 @@ function MedicationSignals({ signals }: { signals: MedicationSignal[] }) {
                 <strong>{signal.label}</strong>
                 <p>{signal.rationale}</p>
                 <p className="review-question">Question: {signal.reviewerQuestion}</p>
+                <EvidenceSnippet
+                  sourceType={signal.evidenceSourceType}
+                  sourceLabel={signal.evidenceSourceLabel}
+                  snippet={signal.evidenceSnippet}
+                />
                 <small>Workflow support only · {formatDate(signal.createdAt)}</small>
               </div>
             </div>
@@ -894,6 +904,29 @@ function SummaryRow({ title, body }: { title: string; body: string }) {
     <div className="summary-row">
       <strong>{title}</strong>
       <p>{body}</p>
+    </div>
+  );
+}
+
+function EvidenceSnippet({
+  sourceType,
+  sourceLabel,
+  snippet
+}: {
+  sourceType: ContextSourceType | null;
+  sourceLabel: string | null;
+  snippet: string | null;
+}) {
+  if (!snippet) {
+    return null;
+  }
+
+  return (
+    <div className="evidence-snippet">
+      <small>
+        Evidence · {sourceType ? formatContextSourceType(sourceType) : "Source"} · {sourceLabel ?? "Unlabelled source"}
+      </small>
+      <p>{snippet}</p>
     </div>
   );
 }
