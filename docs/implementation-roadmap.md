@@ -19,25 +19,26 @@ This roadmap keeps the project progression deliberate. The goal is to make the a
 - Multimodal Clinical Context Layer concept document for future text-source provenance and evidence-linked review signals
 - Context Event model, API endpoints and UI for fictional text-source provenance
 - Evidence-linked risk flags and medication review signals with short source snippets
+- Mock transcript ingestion endpoint and UI using pasted fictional transcript text
 
 ## Next Build Sequence
 
-1. Mock transcript ingestion
-   - Add a text transcript endpoint as a safe stand-in for voice ingestion.
-   - Keep real speech-to-text as a planned adapter only.
-
-2. Mock document/OCR ingestion
+1. Mock document/OCR ingestion
    - Add fictional document text ingestion for referral notes or medication lists.
    - Do not process real patient documents.
 
-3. Optional FHIR-style export examples
+2. Optional FHIR-style export examples
    - Add fictional JSON export examples for intake, medication context and audit events.
    - Do not connect to real healthcare systems.
 
-4. Production deployment design
+3. Production deployment design
    - Document production concerns separately from local Docker Compose.
    - Include migrations, secrets, authentication, monitoring and environment-specific configuration.
 
-5. Optional AI adapters
+4. Optional AI adapters
    - Add environment-variable-based adapters later.
    - Keep mock mode as the default so the project runs without API keys.
+
+5. Optional speech-to-text adapter concept
+   - Keep the implemented transcript path text-only by default.
+   - Document any future adapter as disabled unless explicitly configured.

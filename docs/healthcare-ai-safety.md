@@ -8,6 +8,7 @@ The safest first version of this idea is not a powerful model hidden behind an A
 
 - Preserves the original intake text
 - Preserves additional fictional text context with source provenance
+- Captures pasted mock transcript text as fictional text context only
 - Produces a clearly labelled support summary
 - Flags simple priority terms
 - Captures medication-history context as review questions
@@ -26,6 +27,7 @@ The app does not:
 - Decide clinical urgency autonomously
 - Replace a qualified clinician or care team member
 - Use real patient data
+- Process real audio, perform speech-to-text, or identify speakers
 
 ## Human-In-The-Loop Controls
 
@@ -95,6 +97,7 @@ The audit log records:
 
 - Intake creation
 - Context event creation
+- Mock transcript context creation
 - Summary generation
 - Medication entry creation
 - Medication context analysis

@@ -27,10 +27,10 @@ public sealed class MockAiSummaryService : IAiSummaryService
 
     public AiSummaryResult Generate(Intake intake)
     {
-        var sourceText = intake.IntakeText;
-        var text = sourceText.ToLowerInvariant();
+        var sourceSegments = BuildSourceSegments(intake);
+        var text = string.Join("\n", sourceSegments.Select(source => source.Content)).ToLowerInvariant();
         var concerns = BuildPresentingConcerns(text);
-        var riskFlags = BuildRiskFlags(sourceText);
+        var riskFlags = BuildRiskFlags(sourceSegments);
         var highRiskFound = riskFlags.Any(flag => flag.Severity == RiskSeverity.High);
         var mediumRiskFound = riskFlags.Any(flag => flag.Severity == RiskSeverity.Medium);
         var confidenceScore = CalculateConfidenceScore(text, concerns, highRiskFound);
@@ -53,6 +53,26 @@ public sealed class MockAiSummaryService : IAiSummaryService
         }
 
         return new AiSummaryResult(summary, riskFlags);
+    }
+
+    private static List<SourceEvidence> BuildSourceSegments(Intake intake)
+    {
+        var sources = new List<SourceEvidence>
+        {
+            new(ContextSourceType.IntakeText, IntakeEvidenceSourceLabel, intake.IntakeText)
+        };
+
+        sources.AddRange(intake.ContextEvents
+            .Where(contextEvent => contextEvent.SourceType is ContextSourceType.TranscriptText
+                or ContextSourceType.DocumentText
+                or ContextSourceType.ManualNote)
+            .OrderBy(contextEvent => contextEvent.CapturedAt)
+            .Select(contextEvent => new SourceEvidence(
+                contextEvent.SourceType,
+                contextEvent.SourceLabel,
+                contextEvent.Content)));
+
+        return sources;
     }
 
     private static List<string> BuildPresentingConcerns(string text)
@@ -87,9 +107,13 @@ public sealed class MockAiSummaryService : IAiSummaryService
         return string.Join(" ", history);
     }
 
-    private static List<RiskFlag> BuildRiskFlags(string text)
+    private static List<RiskFlag> BuildRiskFlags(IEnumerable<SourceEvidence> sources) =>
+        sources.SelectMany(BuildRiskFlagsForSource).ToList();
+
+    private static List<RiskFlag> BuildRiskFlagsForSource(SourceEvidence source)
     {
         var flags = new List<RiskFlag>();
+        var text = source.Content;
 
         if (HighRiskTerms.Any(term => ContainsTerm(text, term)))
         {
@@ -97,9 +121,9 @@ public sealed class MockAiSummaryService : IAiSummaryService
             {
                 Label = "Potential immediate safety or safeguarding concern",
                 Severity = RiskSeverity.High,
-                Reason = "The intake contains high-priority terms such as self-harm, suicidal, harm, abuse, or safeguarding.",
-                EvidenceSourceType = ContextSourceType.IntakeText,
-                EvidenceSourceLabel = IntakeEvidenceSourceLabel,
+                Reason = "A source context contains high-priority terms such as self-harm, suicidal, harm, abuse, or safeguarding.",
+                EvidenceSourceType = source.SourceType,
+                EvidenceSourceLabel = source.SourceLabel,
                 EvidenceSnippet = FindEvidenceSnippet(text, HighRiskTerms)
             });
         }
@@ -110,9 +134,9 @@ public sealed class MockAiSummaryService : IAiSummaryService
             {
                 Label = "Crisis language",
                 Severity = RiskSeverity.High,
-                Reason = "The intake uses crisis language and should be checked promptly by a qualified clinician.",
-                EvidenceSourceType = ContextSourceType.IntakeText,
-                EvidenceSourceLabel = IntakeEvidenceSourceLabel,
+                Reason = "A source context uses crisis language and should be checked promptly by a qualified clinician.",
+                EvidenceSourceType = source.SourceType,
+                EvidenceSourceLabel = source.SourceLabel,
                 EvidenceSnippet = FindEvidenceSnippet(text, ["crisis"])
             });
         }
@@ -122,9 +146,9 @@ public sealed class MockAiSummaryService : IAiSummaryService
             {
                 Label = "Urgency language",
                 Severity = RiskSeverity.Medium,
-                Reason = "The intake includes words such as urgent or severe, which may indicate a higher-priority workflow.",
-                EvidenceSourceType = ContextSourceType.IntakeText,
-                EvidenceSourceLabel = IntakeEvidenceSourceLabel,
+                Reason = "A source context includes words such as urgent or severe, which may indicate a higher-priority workflow.",
+                EvidenceSourceType = source.SourceType,
+                EvidenceSourceLabel = source.SourceLabel,
                 EvidenceSnippet = FindEvidenceSnippet(text, UrgencyTerms)
             });
         }
@@ -136,8 +160,8 @@ public sealed class MockAiSummaryService : IAiSummaryService
                 Label = "Functional impact",
                 Severity = RiskSeverity.Low,
                 Reason = "Sleep disruption or repeated distress is mentioned and may affect daily functioning.",
-                EvidenceSourceType = ContextSourceType.IntakeText,
-                EvidenceSourceLabel = IntakeEvidenceSourceLabel,
+                EvidenceSourceType = source.SourceType,
+                EvidenceSourceLabel = source.SourceLabel,
                 EvidenceSnippet = FindEvidenceSnippet(text, ["sleep", "meltdown"])
             });
         }
@@ -243,4 +267,6 @@ public sealed class MockAiSummaryService : IAiSummaryService
 
         return snippet;
     }
+
+    private sealed record SourceEvidence(ContextSourceType SourceType, string SourceLabel, string Content);
 }

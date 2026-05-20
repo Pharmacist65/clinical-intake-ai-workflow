@@ -6,6 +6,7 @@ import type {
   CreateContextEventPayload,
   CreateIntakePayload,
   CreateMedicationPayload,
+  CreateTranscriptContextPayload,
   IntakeDetail,
   IntakeListItem,
   MedicationCategory,
@@ -55,6 +56,15 @@ const initialContextEventForm: ContextEventFormState = {
   metadataJson: ""
 };
 
+const initialTranscriptContextForm: TranscriptContextFormState = {
+  transcriptLabel: "Mock family call transcript",
+  transcriptText: "",
+  capturedAt: "",
+  createdBy: "demo-user",
+  confidenceScore: "",
+  speakerContext: "Fictional family call"
+};
+
 type ContextEventFormState = {
   sourceType: ContextSourceType;
   sourceLabel: string;
@@ -63,6 +73,15 @@ type ContextEventFormState = {
   createdBy: string;
   confidenceScore: string;
   metadataJson: string;
+};
+
+type TranscriptContextFormState = {
+  transcriptLabel: string;
+  transcriptText: string;
+  capturedAt: string;
+  createdBy: string;
+  confidenceScore: string;
+  speakerContext: string;
 };
 
 type MedicationFormState = {
@@ -468,6 +487,7 @@ function ContextEventsSection({
   runAction: (action: () => Promise<IntakeDetail>) => Promise<void>;
 }) {
   const [form, setForm] = useState<ContextEventFormState>(initialContextEventForm);
+  const [transcriptForm, setTranscriptForm] = useState<TranscriptContextFormState>(initialTranscriptContextForm);
 
   async function handleContextSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -478,16 +498,94 @@ function ContextEventsSection({
     setForm(initialContextEventForm);
   }
 
+  async function handleTranscriptSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await runAction(async () => {
+      await api.addTranscriptContext(intake.id, toTranscriptContextPayload(transcriptForm));
+      return api.getIntake(intake.id);
+    });
+    setTranscriptForm(initialTranscriptContextForm);
+  }
+
   return (
     <section className="panel context-events">
       <div className="section-heading">
         <div>
-          <h2>Context Sources</h2>
-          <p>Text context is stored with source provenance for workflow support and human review.</p>
+          <h2>Transcript & Context Sources</h2>
+          <p>Additional text context is stored with source provenance for workflow support and human review.</p>
         </div>
       </div>
 
+      <article className="subpanel transcript-ingestion">
+        <h3>Mock Transcript Ingestion</h3>
+        <p className="muted">Paste fictional transcript text only. No audio processing, diagnosis or autonomous triage is performed.</p>
+        <form className="context-form" onSubmit={handleTranscriptSubmit}>
+          <div className="form-grid">
+            <label>
+              Transcript label
+              <input
+                required
+                value={transcriptForm.transcriptLabel}
+                onChange={(event) => setTranscriptForm({ ...transcriptForm, transcriptLabel: event.target.value })}
+              />
+            </label>
+            <label>
+              Captured at
+              <input
+                type="datetime-local"
+                value={transcriptForm.capturedAt}
+                onChange={(event) => setTranscriptForm({ ...transcriptForm, capturedAt: event.target.value })}
+              />
+            </label>
+            <label>
+              Created by
+              <input
+                required
+                value={transcriptForm.createdBy}
+                onChange={(event) => setTranscriptForm({ ...transcriptForm, createdBy: event.target.value })}
+              />
+            </label>
+            <label>
+              Confidence score
+              <input
+                min={0}
+                max={1}
+                step={0.01}
+                type="number"
+                value={transcriptForm.confidenceScore}
+                onChange={(event) => setTranscriptForm({ ...transcriptForm, confidenceScore: event.target.value })}
+                placeholder="Optional, 0 to 1"
+              />
+            </label>
+            <label className="wide-field">
+              Speaker/context note
+              <input
+                value={transcriptForm.speakerContext}
+                onChange={(event) => setTranscriptForm({ ...transcriptForm, speakerContext: event.target.value })}
+                placeholder="Fictional family call, care team note, referral follow-up..."
+              />
+            </label>
+          </div>
+          <label>
+            Transcript text
+            <textarea
+              required
+              rows={4}
+              value={transcriptForm.transcriptText}
+              onChange={(event) => setTranscriptForm({ ...transcriptForm, transcriptText: event.target.value })}
+              placeholder="Family reports sleep disruption and school support needs in a fictional call transcript..."
+            />
+          </label>
+          <div className="form-actions">
+            <button type="submit" disabled={busy}>
+              Add mock transcript
+            </button>
+          </div>
+        </form>
+      </article>
+
       <form className="context-form" onSubmit={handleContextSubmit}>
+        <h3>Additional Context Source</h3>
         <div className="form-grid">
           <label>
             Source type
@@ -947,6 +1045,24 @@ function toContextEventPayload(form: ContextEventFormState): CreateContextEventP
     createdBy: form.createdBy.trim(),
     confidenceScore: confidence === null ? null : Number(confidence),
     metadataJson: clean(form.metadataJson)
+  };
+}
+
+function toTranscriptContextPayload(form: TranscriptContextFormState): CreateTranscriptContextPayload {
+  const clean = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  };
+
+  const confidence = clean(form.confidenceScore);
+
+  return {
+    transcriptLabel: form.transcriptLabel.trim(),
+    transcriptText: form.transcriptText.trim(),
+    capturedAt: clean(form.capturedAt),
+    createdBy: form.createdBy.trim(),
+    confidenceScore: confidence === null ? null : Number(confidence),
+    speakerContext: clean(form.speakerContext)
   };
 }
 

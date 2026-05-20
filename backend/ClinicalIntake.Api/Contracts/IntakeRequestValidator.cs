@@ -12,6 +12,7 @@ public static class IntakeRequestValidator
     public const int ContextSourceLabelMaxLength = 120;
     public const int ContextContentMaxLength = 6000;
     public const int ContextMetadataMaxLength = 2000;
+    public const int TranscriptSpeakerContextMaxLength = 500;
     public const int MedicationNameMaxLength = 160;
     public const int MedicationShortTextMaxLength = 120;
     public const int MedicationRouteMaxLength = 80;
@@ -48,6 +49,23 @@ public static class IntakeRequestValidator
         ValidateRequiredText(validation, nameof(request.CreatedBy), request.CreatedBy, ActorMaxLength);
         ValidateOptionalText(validation, nameof(request.MetadataJson), request.MetadataJson, ContextMetadataMaxLength);
         ValidateOptionalJson(validation, nameof(request.MetadataJson), request.MetadataJson);
+
+        if (request.ConfidenceScore is < 0m or > 1m)
+        {
+            validation.Add(nameof(request.ConfidenceScore), "ConfidenceScore must be between 0 and 1 when provided.");
+        }
+
+        return validation;
+    }
+
+    public static ApiValidationResult ValidateTranscriptContext(CreateTranscriptContextRequest request)
+    {
+        var validation = new ApiValidationResult();
+
+        ValidateRequiredText(validation, nameof(request.TranscriptLabel), request.TranscriptLabel, ContextSourceLabelMaxLength);
+        ValidateRequiredText(validation, nameof(request.TranscriptText), request.TranscriptText, ContextContentMaxLength);
+        ValidateRequiredText(validation, nameof(request.CreatedBy), request.CreatedBy, ActorMaxLength);
+        ValidateOptionalText(validation, nameof(request.SpeakerContext), request.SpeakerContext, TranscriptSpeakerContextMaxLength);
 
         if (request.ConfidenceScore is < 0m or > 1m)
         {

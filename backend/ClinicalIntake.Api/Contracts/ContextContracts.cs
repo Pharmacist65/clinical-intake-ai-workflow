@@ -9,6 +9,14 @@ public sealed record CreateContextEventRequest(
     decimal? ConfidenceScore,
     string? MetadataJson);
 
+public sealed record CreateTranscriptContextRequest(
+    string TranscriptLabel,
+    string TranscriptText,
+    DateTime? CapturedAt,
+    string CreatedBy,
+    decimal? ConfidenceScore,
+    string? SpeakerContext);
+
 public sealed record ContextEventResponse(
     int Id,
     int IntakeId,

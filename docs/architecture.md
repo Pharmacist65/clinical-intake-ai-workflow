@@ -22,7 +22,7 @@ The React/Vite frontend is intentionally small. It provides:
 - Dashboard counts for `New`, `NeedsReview` and `Reviewed`
 - Intake creation form
 - Intake detail view with original text, summary, risk flags and audit log
-- Context source form and captured context list
+- Mock transcript ingestion form, context source form and captured context list
 - Medication context form, medication timeline, documentation quality summary and medication review signals
 - Optional reviewer note input when marking a case reviewed
 - Review queue for cases that require human attention
@@ -100,9 +100,9 @@ See [fhir-hl7-integration-concept.md](fhir-hl7-integration-concept.md) for the f
 
 ### Multimodal Clinical Context Concept
 
-The project implements a small first step toward the multimodal clinical context concept: text-derived context from multiple sources can be recorded as `ContextEvent` records. Supported source types include intake text, voice transcript text, document/OCR text, medication-history notes and manual team notes.
+The project implements a small first step toward the multimodal clinical context concept: text-derived context from multiple sources can be recorded as `ContextEvent` records. A dedicated mock transcript endpoint stores pasted fictional transcript text as `TranscriptText`; the generic context endpoint can also store document/OCR text, medication-history notes and manual team notes.
 
-This is still text-only workflow support. The current application does not process audio, clinical images, scanned documents, real patient records or live healthcare feeds. Future transcript/OCR adapters remain planned only. The current implementation preserves source provenance and includes evidence snippets on deterministic risk flags and medication review signals so reviewers can inspect why a workflow prompt was created.
+This is still text-only workflow support. The current application does not process audio, clinical images, scanned documents, real patient records or live healthcare feeds. Real speech-to-text and OCR adapters remain planned only. The current implementation preserves source provenance and includes evidence snippets on deterministic risk flags and medication review signals so reviewers can inspect why a workflow prompt was created.
 
 See [multimodal-clinical-context-layer.md](multimodal-clinical-context-layer.md) for the proposed model, workflow and safety boundaries.
 
@@ -114,7 +114,7 @@ See [multimodal-clinical-context-layer.md](multimodal-clinical-context-layer.md)
 - If any risk flag is `High`, the intake is routed to `NeedsReview`.
 - If any medication signal is `High`, the intake is routed to `NeedsReview`.
 - Risk flags and medication signals can include an evidence source label and short snippet for reviewer inspection.
-- Context events are provenance records only; they do not change review status by themselves.
+- Context events are provenance records only; they do not change review status by themselves. Summary generation can use recorded text context to create deterministic review signals with evidence snippets.
 - Review status changes are appended to the audit log with an optional workflow review note.
 
 ## Data Flow
@@ -138,8 +138,8 @@ sequenceDiagram
     API->>Workflow: GenerateSummaryAsync
     Workflow->>AI: Generate deterministic summary
     Workflow->>DB: Save summary, flags, status and audit log
-    User->>UI: Add context source
-    UI->>API: POST /api/intakes/{id}/context-events
+    User->>UI: Add mock transcript or context source
+    UI->>API: POST /api/intakes/{id}/transcript-context or /context-events
     Workflow->>DB: Save context event and audit log
     User->>UI: Add medication context
     UI->>API: POST /api/intakes/{id}/medications

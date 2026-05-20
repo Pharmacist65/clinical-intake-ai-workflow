@@ -30,13 +30,13 @@ This application focuses on that workflow:
 - React + TypeScript frontend: dashboard, intake creation, detail view, summary generation, and review queue UI
 - Database-backed workflow: SQLite with Entity Framework Core models for intakes, summaries, risk flags, and audit logs
 - Pharmacy context layer: medication-history capture, documentation quality checks, pharmacist-review signals, and medication timeline
-- Context source provenance: fictional text-derived context sources can be stored with source type, label, author, timing, confidence, and audit history
+- Context source provenance: fictional text-derived context sources, including mock transcript text, can be stored with source type, label, author, timing, confidence, and audit history
 - Evidence-linked review signals: risk flags and medication signals include short source snippets when deterministic rules are triggered
 - Safe applied AI design: deterministic mock AI, no API keys required, confidence scoring, disclaimers, and constrained output
 - Human-in-the-loop review: high-risk or low-confidence cases are routed to `NeedsReview`
 - Auditability: intake creation, summary generation, medication context analysis, review notes, and review status updates are recorded
 - Evaluation discipline: fictional dataset-driven tests check expected routing, risk flags, medication signals, and documentation-quality status
-- Future-safe architecture thinking: implemented text-source provenance plus documented interoperability and multimodal concepts without claiming live EHR, audio, OCR, image or LLM capability
+- Future-safe architecture thinking: implemented text-source provenance and mock transcript ingestion plus documented interoperability and multimodal concepts without claiming live EHR, audio, OCR, image or LLM capability
 
 ## Product Summary
 
@@ -45,7 +45,7 @@ The app lets a care team user:
 1. Create a fictional intake note.
 2. Generate a deterministic AI-style structured summary.
 3. See possible risk flags and confidence score.
-4. Add fictional text context sources such as transcript text, document text, medication-history notes, or manual team notes.
+4. Add fictional text context sources such as mock transcript text, document text, medication-history notes, or manual team notes.
 5. Record medication-history context for pharmacist/clinician review.
 6. View medication documentation quality gaps.
 7. Generate medication review signals and reviewer questions.
@@ -108,9 +108,9 @@ This is documentation only. The current application does not connect to NHS syst
 
 ## Multimodal Clinical Context Concept
 
-The project implements a small first step toward the multimodal clinical context concept: fictional text-derived context sources can be recorded as `ContextEvent` records with source type, source label, content, captured time, author, optional confidence score, and optional metadata.
+The project implements a small first step toward the multimodal clinical context concept: fictional text-derived context sources can be recorded as `ContextEvent` records with source type, source label, content, captured time, author, optional confidence score, and optional metadata. It also includes a dedicated mock transcript ingestion endpoint that stores pasted transcript text as a provenance-tracked `TranscriptText` context source.
 
-This is still text-only workflow support. The current application does not process audio, clinical images, scanned documents, real patient records, or live healthcare feeds. Future transcript/OCR/LLM adapters remain planned only. The concept focuses on preserving source provenance, linking review signals to short evidence snippets, and routing prompts to qualified human review.
+This is still text-only workflow support. The current application does not process audio, clinical images, scanned documents, real patient records, or live healthcare feeds. Real speech-to-text, OCR, image, and LLM adapters remain planned only. The concept focuses on preserving source provenance, linking review signals to short evidence snippets, and routing prompts to qualified human review.
 
 See [docs/multimodal-clinical-context-layer.md](docs/multimodal-clinical-context-layer.md) for the implemented `ContextEvent` model, evidence-linked review signal concept, safety boundaries, and future implementation sequence.
 
@@ -205,6 +205,7 @@ Unexpected failures return `500 Internal Server Error` with the same simple erro
 | `GET` | `/api/intakes/{id}/audit-log` | `200 OK` | Read audit log entries for one intake |
 | `POST` | `/api/intakes/{id}/context-events` | `201 Created` | Add a fictional text context source |
 | `GET` | `/api/intakes/{id}/context-events` | `200 OK` | List text context sources for one intake |
+| `POST` | `/api/intakes/{id}/transcript-context` | `201 Created` | Add fictional mock transcript text as a provenance-tracked context source |
 | `POST` | `/api/intakes/{id}/medications` | `201 Created` | Add medication-history context |
 | `GET` | `/api/intakes/{id}/medications` | `200 OK` | List medication entries for one intake |
 | `POST` | `/api/intakes/{id}/analyse-medication-context` | `200 OK` | Generate medication review signals |
@@ -246,6 +247,8 @@ Routing rule:
 - If confidence is below `0.75`, set `reviewStatus` to `NeedsReview`.
 - If any risk flag is `High`, set `reviewStatus` to `NeedsReview`.
 - Otherwise keep the case in `New` until a human reviewer marks it reviewed.
+
+Risk flags can be generated from the original intake text and from additional fictional text context sources such as mock transcript text. Evidence snippets show the matched source text for reviewer inspection; they are not clinical proof or autonomous triage.
 
 ### Update Review Status
 
@@ -298,6 +301,27 @@ Supported source types:
 Context events preserve source provenance for workflow review. They do not diagnose, triage, prescribe, interpret audio or images, or generate clinical advice.
 
 Validation keeps source type constrained, confidence score between `0` and `1` when provided, and `metadataJson` valid JSON when present.
+
+### Add Mock Transcript Context
+
+`POST /api/intakes/{id}/transcript-context`
+
+Request:
+
+```json
+{
+  "transcriptLabel": "Mock family call transcript",
+  "transcriptText": "Family described sleep disruption and school support needs.",
+  "capturedAt": null,
+  "createdBy": "demo-user",
+  "confidenceScore": 0.91,
+  "speakerContext": "Fictional family call"
+}
+```
+
+This endpoint is a safe stand-in for future voice or transcript ingestion. It stores pasted fictional transcript text as a `ContextEvent` with `sourceType` set to `TranscriptText`, adds metadata that marks it as mock transcript input, and creates an audit log entry.
+
+It does not process audio, run speech-to-text, identify speakers, diagnose, prescribe, recommend treatment, or make triage decisions.
 
 ### Add Medication Context
 
@@ -489,6 +513,7 @@ The app is intentionally constrained:
 - It does not use real patient data.
 - It stores the original intake beside the generated summary.
 - It stores additional context sources with provenance instead of hiding them behind AI output.
+- It stores mock transcript text as pasted fictional text only; it does not process real audio or perform speech-to-text.
 - It uses deterministic mock AI rules in this version.
 - It includes a confidence score and safety disclaimer.
 - It shows evidence snippets for generated review signals where a deterministic rule matched source text.
@@ -509,7 +534,7 @@ Generated summaries always include:
 - The AI behaviour is a deterministic mock, not a real LLM integration.
 - The medication context layer is not a real drug-interaction engine.
 - The pharmacy context feature does not perform medication reconciliation, drug interaction checking, clinical decision support, prescribing advice, or diagnosis.
-- Context events are manually entered fictional text sources only; there is no real audio, OCR, image interpretation, or document processing pipeline.
+- Context events and mock transcript inputs are manually entered fictional text sources only; there is no real audio, OCR, image interpretation, or document processing pipeline.
 - Evidence snippets explain why a workflow prompt was created; they are not clinical proof or a complete safety assessment.
 - Keyword rules are simplistic and will miss clinical nuance.
 - Absence of a risk flag does not mean absence of clinical risk.
@@ -524,7 +549,8 @@ Planned improvements, not currently implemented:
 - Real LLM integration via API with an environment-variable based adapter
 - Retrieval-augmented generation over approved clinical policy documents
 - FHIR/HL7 adapter prototypes using fictional example payloads
-- Mock transcript and document/OCR text ingestion using fictional data
+- Mock document/OCR text ingestion using fictional data
+- Optional speech-to-text adapter for fictional or approved non-patient transcripts only
 - Role-based access control
 - Production deployment design
 - Observability and monitoring

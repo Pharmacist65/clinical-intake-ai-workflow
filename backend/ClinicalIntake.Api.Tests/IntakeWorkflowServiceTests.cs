@@ -78,6 +78,20 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
     }
 
     [Fact]
+    public void ValidateTranscriptContext_WithMissingFields_ReturnsValidationErrors()
+    {
+        var validation = IntakeRequestValidator.ValidateTranscriptContext(
+            new CreateTranscriptContextRequest("", "", null, "", 1.2m, new string('x', 501)));
+
+        Assert.False(validation.IsValid);
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateTranscriptContextRequest.TranscriptLabel));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateTranscriptContextRequest.TranscriptText));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateTranscriptContextRequest.CreatedBy));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateTranscriptContextRequest.ConfidenceScore));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateTranscriptContextRequest.SpeakerContext));
+    }
+
+    [Fact]
     public async Task AddContextEventAsync_PersistsContextEventAndAuditLog()
     {
         var intake = await _workflow.CreateIntakeAsync(DefaultRequest());
@@ -94,6 +108,26 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
         Assert.NotNull(updated);
         Assert.Contains(updated.ContextEvents, item => item.Id == contextEvent.Id);
         Assert.Contains(updated.AuditLogs, log => log.Action == "ContextEventAdded");
+    }
+
+    [Fact]
+    public async Task AddTranscriptContextAsync_PersistsTranscriptEventAndAuditLog()
+    {
+        var intake = await _workflow.CreateIntakeAsync(DefaultRequest());
+
+        var contextEvent = await _workflow.AddTranscriptContextAsync(
+            intake.Id,
+            TranscriptRequest("Family call transcript", "Parent describes poor sleep and school support needs."));
+
+        var updated = await _workflow.GetIntakeAsync(intake.Id);
+
+        Assert.NotNull(contextEvent);
+        Assert.Equal(ContextSourceType.TranscriptText, contextEvent.SourceType);
+        Assert.NotNull(contextEvent.MetadataJson);
+        Assert.Contains("mock-transcript", contextEvent.MetadataJson);
+        Assert.NotNull(updated);
+        Assert.Contains(updated.ContextEvents, item => item.Id == contextEvent.Id);
+        Assert.Contains(updated.AuditLogs, log => log.Action == "TranscriptContextAdded");
     }
 
     [Fact]
@@ -125,6 +159,28 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
         Assert.Contains("Sleep", updated.AiSummary.PresentingConcerns);
         Assert.True(updated.AiSummary.ConfidenceScore > 0);
         Assert.Equal(AiSafety.Disclaimer, updated.AiSummary.Disclaimer);
+    }
+
+    [Fact]
+    public async Task GenerateSummaryAsync_UsesTranscriptContextForReviewSignals()
+    {
+        var intake = await _workflow.CreateIntakeAsync(DefaultRequest("Brief unclear family note."));
+        await _workflow.AddTranscriptContextAsync(
+            intake.Id,
+            TranscriptRequest(
+                "Family call transcript",
+                "During the fictional call, the family mentioned crisis language and severe sleep disruption."));
+
+        var updated = await _workflow.GenerateSummaryAsync(intake.Id, "test");
+
+        Assert.NotNull(updated);
+        Assert.Equal(ReviewStatus.NeedsReview, updated.ReviewStatus);
+        Assert.Contains(updated.RiskFlags, flag =>
+            flag.Severity == RiskSeverity.High
+            && flag.EvidenceSourceType == ContextSourceType.TranscriptText
+            && flag.EvidenceSourceLabel == "Family call transcript"
+            && flag.EvidenceSnippet != null
+            && flag.EvidenceSnippet.Contains("crisis", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -393,6 +449,18 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
             "demo-user",
             0.9m,
             null);
+
+    private static CreateTranscriptContextRequest TranscriptRequest(
+        string transcriptLabel,
+        string transcriptText,
+        string? speakerContext = "Fictional family call") =>
+        new(
+            transcriptLabel,
+            transcriptText,
+            null,
+            "demo-user",
+            0.9m,
+            speakerContext);
 
     private static CreateMedicationEntryRequest MedicationRequest(
         string medicationName,

@@ -3,6 +3,7 @@ import type {
   CreateContextEventPayload,
   CreateIntakePayload,
   CreateMedicationPayload,
+  CreateTranscriptContextPayload,
   IntakeDetail,
   IntakeListItem,
   MedicationDocumentationQuality,
@@ -50,6 +51,11 @@ export const api = {
     }),
   addContextEvent: (id: number, payload: CreateContextEventPayload) =>
     request<ContextEvent>(`/api/intakes/${id}/context-events`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  addTranscriptContext: (id: number, payload: CreateTranscriptContextPayload) =>
+    request<ContextEvent>(`/api/intakes/${id}/transcript-context`, {
       method: "POST",
       body: JSON.stringify(payload)
     }),

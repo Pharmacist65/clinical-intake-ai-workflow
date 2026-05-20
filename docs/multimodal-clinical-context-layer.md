@@ -2,7 +2,7 @@
 
 This document describes the architecture concept for handling clinical intake context from multiple text sources while keeping the application inside a safe workflow-support boundary.
 
-The current application implements the first small step: manually entered fictional text context can be stored as `ContextEvent` records with source provenance. It does not process audio, images, scanned clinical documents, real patient records, or live healthcare system feeds.
+The current application implements the first small step: manually entered fictional text context can be stored as `ContextEvent` records with source provenance. It also includes a dedicated mock transcript ingestion endpoint for pasted fictional transcript text. It does not process audio, images, scanned clinical documents, real patient records, or live healthcare system feeds.
 
 ## Why This Matters
 
@@ -65,8 +65,9 @@ The current MVP exposes:
 
 - `POST /api/intakes/{id}/context-events`
 - `GET /api/intakes/{id}/context-events`
+- `POST /api/intakes/{id}/transcript-context`
 
-These endpoints store and list fictional text context only. They do not run transcription, OCR, clinical image interpretation, LLM extraction, or autonomous triage.
+These endpoints store and list fictional text context only. The transcript endpoint is a safe stand-in for future voice workflows: it accepts pasted text, stores it as `TranscriptText`, and records an audit log entry. It does not run transcription, OCR, speaker identification, clinical image interpretation, LLM extraction, or autonomous triage.
 
 ## Evidence-Linked Review Signals
 
@@ -117,10 +118,10 @@ Safety should come from:
 
 ## Future Implementation Steps
 
-1. Add a mock transcript text ingestion endpoint.
-2. Add a mock document/OCR text ingestion endpoint.
-3. Extend the fictional evaluation dataset with context-event scenarios.
-4. Add optional adapters for transcription, OCR or LLM extraction only after the mock workflow is stable.
+1. Add a mock document/OCR text ingestion endpoint.
+2. Extend the fictional evaluation dataset with context-event scenarios.
+3. Add optional adapters for transcription, OCR or LLM extraction only after the mock workflow is stable.
+4. Keep all adapters disabled by default and preserve mock text mode as the safe local path.
 
 Each step should keep fictional data, human review and auditability as default design constraints.
 

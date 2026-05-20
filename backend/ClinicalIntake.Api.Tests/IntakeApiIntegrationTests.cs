@@ -95,6 +95,7 @@ public sealed class IntakeApiIntegrationTests : IClassFixture<ClinicalIntakeApiF
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains("/api/intakes", body, StringComparison.Ordinal);
         Assert.Contains("/api/intakes/{id}/context-events", body, StringComparison.Ordinal);
+        Assert.Contains("/api/intakes/{id}/transcript-context", body, StringComparison.Ordinal);
         Assert.Contains("/api/intakes/{id}/medication-documentation-quality", body, StringComparison.Ordinal);
         Assert.Contains("Clinical Intake AI Workflow API", body, StringComparison.Ordinal);
     }
@@ -134,6 +135,39 @@ public sealed class IntakeApiIntegrationTests : IClassFixture<ClinicalIntakeApiF
         var contextEvents = await listResponse.Content.ReadFromJsonAsync<IReadOnlyList<ContextEventResponse>>();
         Assert.NotNull(contextEvents);
         Assert.Contains(contextEvents, item => item.Id == contextEvent.Id);
+    }
+
+    [Fact]
+    public async Task TranscriptContextEndpoint_CreatesTranscriptContextEvent()
+    {
+        var createResponse = await _client.PostAsJsonAsync("/api/intakes", new CreateIntakeRequest(
+            "API Patient Transcript",
+            12,
+            "Initial note says family will provide further context.",
+            "api integration test",
+            "api-test"));
+        var created = await createResponse.Content.ReadFromJsonAsync<IntakeDetailResponse>();
+
+        Assert.NotNull(created);
+
+        var transcriptResponse = await _client.PostAsJsonAsync(
+            $"/api/intakes/{created.Id}/transcript-context",
+            new CreateTranscriptContextRequest(
+                "Mock family call transcript",
+                "Family describes school support needs and sleep disruption in fictional transcript text.",
+                null,
+                "api-test",
+                0.91m,
+                "Fictional family call"));
+
+        Assert.Equal(HttpStatusCode.Created, transcriptResponse.StatusCode);
+        var contextEvent = await transcriptResponse.Content.ReadFromJsonAsync<ContextEventResponse>();
+
+        Assert.NotNull(contextEvent);
+        Assert.Equal("TranscriptText", contextEvent.SourceType);
+        Assert.Equal("Mock family call transcript", contextEvent.SourceLabel);
+        Assert.NotNull(contextEvent.MetadataJson);
+        Assert.Contains("mock-transcript", contextEvent.MetadataJson, StringComparison.Ordinal);
     }
 
     [Fact]

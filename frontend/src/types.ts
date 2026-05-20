@@ -166,3 +166,12 @@ export interface CreateContextEventPayload {
   confidenceScore: number | null;
   metadataJson: string | null;
 }
+
+export interface CreateTranscriptContextPayload {
+  transcriptLabel: string;
+  transcriptText: string;
+  capturedAt: string | null;
+  createdBy: string;
+  confidenceScore: number | null;
+  speakerContext: string | null;
+}

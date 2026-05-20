@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ClinicalIntake.Api.Contracts;
 using ClinicalIntake.Api.Data;
 using ClinicalIntake.Api.Models;
@@ -143,6 +144,52 @@ public sealed class IntakeWorkflowService(
             .OrderByDescending(contextEvent => contextEvent.CapturedAt)
             .ThenByDescending(contextEvent => contextEvent.CreatedAt)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<ContextEvent?> AddTranscriptContextAsync(
+        int intakeId,
+        CreateTranscriptContextRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var validation = IntakeRequestValidator.ValidateTranscriptContext(request);
+        if (!validation.IsValid)
+        {
+            throw new ArgumentException(validation.Errors[0].Message);
+        }
+
+        var intake = await db.Intakes
+            .Include(existing => existing.AuditLogs)
+            .FirstOrDefaultAsync(existing => existing.Id == intakeId, cancellationToken);
+
+        if (intake is null)
+        {
+            return null;
+        }
+
+        var contextEvent = new ContextEvent
+        {
+            IntakeId = intakeId,
+            SourceType = ContextSourceType.TranscriptText,
+            SourceLabel = request.TranscriptLabel.Trim(),
+            Content = request.TranscriptText.Trim(),
+            CapturedAt = request.CapturedAt ?? DateTime.UtcNow,
+            CreatedBy = request.CreatedBy.Trim(),
+            ConfidenceScore = request.ConfidenceScore,
+            MetadataJson = BuildTranscriptMetadata(request.SpeakerContext),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        db.ContextEvents.Add(contextEvent);
+        intake.AuditLogs.Add(new AuditLog
+        {
+            Action = "TranscriptContextAdded",
+            Actor = contextEvent.CreatedBy,
+            Timestamp = DateTime.UtcNow,
+            Details = $"Mock transcript context recorded for workflow support: {contextEvent.SourceLabel}."
+        });
+
+        await db.SaveChangesAsync(cancellationToken);
+        return contextEvent;
     }
 
     public async Task<MedicationEntry?> AddMedicationAsync(
@@ -402,4 +449,20 @@ public sealed class IntakeWorkflowService(
 
     private static string? CleanOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string? BuildTranscriptMetadata(string? speakerContext)
+    {
+        var cleanedSpeakerContext = CleanOptional(speakerContext);
+        if (cleanedSpeakerContext is null)
+        {
+            return null;
+        }
+
+        return JsonSerializer.Serialize(new
+        {
+            mode = "mock-transcript",
+            speakerContext = cleanedSpeakerContext,
+            safetyScope = "workflow-support-only-no-diagnosis"
+        });
+    }
 }
