@@ -42,7 +42,7 @@ I also added a FHIR/HL7 concept document to show how the internal models could l
 
 The test suite also includes a small fictional evaluation dataset. Each case defines expected workflow behaviour, such as review routing, risk labels, medication review signals and medication documentation quality. I would describe this as regression testing for deterministic workflow rules, not as clinical validation.
 
-I also documented a future multimodal clinical context layer. I would be careful with the wording: it is not an implemented audio, image or OCR AI system. It is an architecture concept for preserving text-derived context from different sources, linking review prompts back to evidence snippets, and keeping human review central.
+I also implemented the first small piece of the multimodal clinical context concept: `ContextEvent` records. These let the workflow store fictional text-derived context sources with provenance, such as transcript text, document text, medication-history notes or manual team notes. I would be careful with the wording: it is not an implemented audio, image or OCR AI system.
 
 ## AI Safety
 
@@ -72,7 +72,6 @@ The next improvements I would discuss are:
 
 - Add an optional OpenAI adapter behind an interface while keeping mock mode as the default.
 - Add RAG over local clinical policy documents so generated suggestions are grounded in approved guidance.
-- Add a `ContextEvent` model so future text sources preserve provenance and source metadata.
 - Add evidence-linked review signals so prompts can point back to the source snippet that triggered them.
 - Add mock transcript and document/OCR text ingestion using fictional data only.
 - Add role-based access control for reviewers and administrators.

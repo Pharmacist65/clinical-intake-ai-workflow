@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ClinicalIntake.Api.Models;
 
 namespace ClinicalIntake.Api.Contracts;
@@ -8,6 +9,9 @@ public static class IntakeRequestValidator
     public const int IntakeTextMaxLength = 8000;
     public const int SourceMaxLength = 80;
     public const int ActorMaxLength = 120;
+    public const int ContextSourceLabelMaxLength = 120;
+    public const int ContextContentMaxLength = 6000;
+    public const int ContextMetadataMaxLength = 2000;
     public const int MedicationNameMaxLength = 160;
     public const int MedicationShortTextMaxLength = 120;
     public const int MedicationRouteMaxLength = 80;
@@ -29,6 +33,25 @@ public static class IntakeRequestValidator
         if (request.Age is < MinimumAge or > MaximumAge)
         {
             validation.Add(nameof(request.Age), $"Age must be between {MinimumAge} and {MaximumAge}.");
+        }
+
+        return validation;
+    }
+
+    public static ApiValidationResult ValidateContextEvent(CreateContextEventRequest request)
+    {
+        var validation = new ApiValidationResult();
+
+        ValidateEnum<ContextSourceType>(validation, nameof(request.SourceType), request.SourceType);
+        ValidateRequiredText(validation, nameof(request.SourceLabel), request.SourceLabel, ContextSourceLabelMaxLength);
+        ValidateRequiredText(validation, nameof(request.Content), request.Content, ContextContentMaxLength);
+        ValidateRequiredText(validation, nameof(request.CreatedBy), request.CreatedBy, ActorMaxLength);
+        ValidateOptionalText(validation, nameof(request.MetadataJson), request.MetadataJson, ContextMetadataMaxLength);
+        ValidateOptionalJson(validation, nameof(request.MetadataJson), request.MetadataJson);
+
+        if (request.ConfidenceScore is < 0m or > 1m)
+        {
+            validation.Add(nameof(request.ConfidenceScore), "ConfidenceScore must be between 0 and 1 when provided.");
         }
 
         return validation;
@@ -102,6 +125,26 @@ public static class IntakeRequestValidator
         if (!string.IsNullOrWhiteSpace(value) && value.Trim().Length > maxLength)
         {
             validation.Add(field, $"{field} must be {maxLength} characters or fewer.");
+        }
+    }
+
+    private static void ValidateOptionalJson(
+        ApiValidationResult validation,
+        string field,
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        try
+        {
+            using var _ = JsonDocument.Parse(value);
+        }
+        catch (JsonException)
+        {
+            validation.Add(field, $"{field} must be valid JSON when provided.");
         }
     }
 

@@ -81,6 +81,70 @@ public sealed class IntakeWorkflowService(
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<ContextEvent?> AddContextEventAsync(
+        int intakeId,
+        CreateContextEventRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var validation = IntakeRequestValidator.ValidateContextEvent(request);
+        if (!validation.IsValid)
+        {
+            throw new ArgumentException(validation.Errors[0].Message);
+        }
+
+        var intake = await db.Intakes
+            .Include(existing => existing.AuditLogs)
+            .FirstOrDefaultAsync(existing => existing.Id == intakeId, cancellationToken);
+
+        if (intake is null)
+        {
+            return null;
+        }
+
+        var contextEvent = new ContextEvent
+        {
+            IntakeId = intakeId,
+            SourceType = Enum.Parse<ContextSourceType>(request.SourceType, ignoreCase: true),
+            SourceLabel = request.SourceLabel.Trim(),
+            Content = request.Content.Trim(),
+            CapturedAt = request.CapturedAt ?? DateTime.UtcNow,
+            CreatedBy = request.CreatedBy.Trim(),
+            ConfidenceScore = request.ConfidenceScore,
+            MetadataJson = CleanOptional(request.MetadataJson),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        db.ContextEvents.Add(contextEvent);
+        intake.AuditLogs.Add(new AuditLog
+        {
+            Action = "ContextEventAdded",
+            Actor = contextEvent.CreatedBy,
+            Timestamp = DateTime.UtcNow,
+            Details = $"Context event recorded from {contextEvent.SourceType}: {contextEvent.SourceLabel}."
+        });
+
+        await db.SaveChangesAsync(cancellationToken);
+        return contextEvent;
+    }
+
+    public async Task<IReadOnlyList<ContextEvent>?> ListContextEventsAsync(
+        int intakeId,
+        CancellationToken cancellationToken = default)
+    {
+        var exists = await db.Intakes.AnyAsync(intake => intake.Id == intakeId, cancellationToken);
+        if (!exists)
+        {
+            return null;
+        }
+
+        return await db.ContextEvents
+            .AsNoTracking()
+            .Where(contextEvent => contextEvent.IntakeId == intakeId)
+            .OrderByDescending(contextEvent => contextEvent.CapturedAt)
+            .ThenByDescending(contextEvent => contextEvent.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<MedicationEntry?> AddMedicationAsync(
         int intakeId,
         CreateMedicationEntryRequest request,
@@ -308,6 +372,7 @@ public sealed class IntakeWorkflowService(
             .AsSplitQuery()
             .Include(intake => intake.AiSummary)
             .Include(intake => intake.RiskFlags)
+            .Include(intake => intake.ContextEvents)
             .Include(intake => intake.MedicationEntries)
             .Include(intake => intake.MedicationSignals)
             .Include(intake => intake.AuditLogs);

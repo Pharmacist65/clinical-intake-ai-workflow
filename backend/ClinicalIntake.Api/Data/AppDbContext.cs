@@ -8,6 +8,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Intake> Intakes => Set<Intake>();
     public DbSet<AiSummary> AiSummaries => Set<AiSummary>();
     public DbSet<RiskFlag> RiskFlags => Set<RiskFlag>();
+    public DbSet<ContextEvent> ContextEvents => Set<ContextEvent>();
     public DbSet<MedicationEntry> MedicationEntries => Set<MedicationEntry>();
     public DbSet<MedicationSignal> MedicationSignals => Set<MedicationSignal>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
@@ -28,6 +29,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.HasMany(intake => intake.RiskFlags)
                 .WithOne(flag => flag.Intake)
                 .HasForeignKey(flag => flag.IntakeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasMany(intake => intake.ContextEvents)
+                .WithOne(contextEvent => contextEvent.Intake)
+                .HasForeignKey(contextEvent => contextEvent.IntakeId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.HasMany(intake => intake.MedicationEntries)
                 .WithOne(medication => medication.Intake)
@@ -58,6 +63,15 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(flag => flag.Label).HasMaxLength(120).IsRequired();
             entity.Property(flag => flag.Severity).HasConversion<string>().HasMaxLength(40);
             entity.Property(flag => flag.Reason).HasMaxLength(1000).IsRequired();
+        });
+
+        modelBuilder.Entity<ContextEvent>(entity =>
+        {
+            entity.Property(contextEvent => contextEvent.SourceType).HasConversion<string>().HasMaxLength(40);
+            entity.Property(contextEvent => contextEvent.SourceLabel).HasMaxLength(120).IsRequired();
+            entity.Property(contextEvent => contextEvent.Content).HasMaxLength(6000).IsRequired();
+            entity.Property(contextEvent => contextEvent.CreatedBy).HasMaxLength(120).IsRequired();
+            entity.Property(contextEvent => contextEvent.MetadataJson).HasMaxLength(2000);
         });
 
         modelBuilder.Entity<MedicationEntry>(entity =>

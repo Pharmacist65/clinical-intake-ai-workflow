@@ -63,6 +63,55 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
     }
 
     [Fact]
+    public void ValidateContextEvent_WithInvalidSourceTypeAndConfidence_ReturnsValidationErrors()
+    {
+        var validation = IntakeRequestValidator.ValidateContextEvent(
+            new CreateContextEventRequest("Audio", "", "", null, "", 1.2m, "not-json"));
+
+        Assert.False(validation.IsValid);
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateContextEventRequest.SourceType));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateContextEventRequest.SourceLabel));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateContextEventRequest.Content));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateContextEventRequest.CreatedBy));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateContextEventRequest.ConfidenceScore));
+        Assert.Contains(validation.Errors, error => error.Field == nameof(CreateContextEventRequest.MetadataJson));
+    }
+
+    [Fact]
+    public async Task AddContextEventAsync_PersistsContextEventAndAuditLog()
+    {
+        var intake = await _workflow.CreateIntakeAsync(DefaultRequest());
+
+        var contextEvent = await _workflow.AddContextEventAsync(
+            intake.Id,
+            ContextEventRequest("TranscriptText", "Family call transcript"));
+
+        var updated = await _workflow.GetIntakeAsync(intake.Id);
+
+        Assert.NotNull(contextEvent);
+        Assert.True(contextEvent.Id > 0);
+        Assert.Equal(ContextSourceType.TranscriptText, contextEvent.SourceType);
+        Assert.NotNull(updated);
+        Assert.Contains(updated.ContextEvents, item => item.Id == contextEvent.Id);
+        Assert.Contains(updated.AuditLogs, log => log.Action == "ContextEventAdded");
+    }
+
+    [Fact]
+    public async Task ListContextEventsAsync_ReturnsEventsForIntake()
+    {
+        var intake = await _workflow.CreateIntakeAsync(DefaultRequest());
+        await _workflow.AddContextEventAsync(intake.Id, ContextEventRequest("ManualNote", "Care team note"));
+        await _workflow.AddContextEventAsync(intake.Id, ContextEventRequest("DocumentText", "Referral text"));
+
+        var contextEvents = await _workflow.ListContextEventsAsync(intake.Id);
+
+        Assert.NotNull(contextEvents);
+        Assert.Equal(2, contextEvents.Count);
+        Assert.Contains(contextEvents, item => item.SourceType == ContextSourceType.ManualNote);
+        Assert.Contains(contextEvents, item => item.SourceType == ContextSourceType.DocumentText);
+    }
+
+    [Fact]
     public async Task GenerateSummaryAsync_CreatesStructuredSummary()
     {
         var intake = await _workflow.CreateIntakeAsync(DefaultRequest(
@@ -321,6 +370,19 @@ public sealed class IntakeWorkflowServiceTests : IDisposable
             intakeText ?? "Parent reports sleep problems, school difficulties and attention concerns over the last term.",
             "family phone note",
             "demo-user");
+
+    private static CreateContextEventRequest ContextEventRequest(
+        string sourceType,
+        string sourceLabel,
+        string? content = null) =>
+        new(
+            sourceType,
+            sourceLabel,
+            content ?? "Fictional source text for workflow context only.",
+            null,
+            "demo-user",
+            0.9m,
+            null);
 
     private static CreateMedicationEntryRequest MedicationRequest(
         string medicationName,

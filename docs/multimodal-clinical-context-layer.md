@@ -1,8 +1,8 @@
 # Multimodal Clinical Context Layer Concept
 
-This document describes a future architecture concept for handling clinical intake context from multiple sources while keeping the application inside a safe workflow-support boundary.
+This document describes the architecture concept for handling clinical intake context from multiple text sources while keeping the application inside a safe workflow-support boundary.
 
-It is documentation only. The current application does not process audio, images, scanned clinical documents, real patient records, or live healthcare system feeds.
+The current application implements the first small step: manually entered fictional text context can be stored as `ContextEvent` records with source provenance. It does not process audio, images, scanned clinical documents, real patient records, or live healthcare system feeds.
 
 ## Why This Matters
 
@@ -43,7 +43,7 @@ Any future audio, OCR or LLM adapter should sit behind an interface and be disab
 
 ## Proposed Data Model
 
-A future implementation could introduce a generic `ContextEvent` model:
+The application includes a generic `ContextEvent` model:
 
 | Field | Purpose |
 | --- | --- |
@@ -57,7 +57,16 @@ A future implementation could introduce a generic `ContextEvent` model:
 | `confidenceScore` | Optional extraction/transcription confidence |
 | `metadataJson` | Optional structured metadata for source-specific details |
 
-This model would preserve context provenance without forcing every source into the same clinical meaning.
+This model preserves context provenance without forcing every source into the same clinical meaning.
+
+## Implemented API Surface
+
+The current MVP exposes:
+
+- `POST /api/intakes/{id}/context-events`
+- `GET /api/intakes/{id}/context-events`
+
+These endpoints store and list fictional text context only. They do not run transcription, OCR, clinical image interpretation, LLM extraction, or autonomous triage.
 
 ## Evidence-Linked Review Signals
 
@@ -108,12 +117,11 @@ Safety should come from:
 
 ## Future Implementation Steps
 
-1. Add the `ContextEvent` model and API endpoints for fictional text context.
-2. Add evidence snippets to generated review signals.
-3. Add a mock transcript text ingestion endpoint.
-4. Add a mock document/OCR text ingestion endpoint.
-5. Extend the fictional evaluation dataset with context-event scenarios.
-6. Add optional adapters for transcription, OCR or LLM extraction only after the mock workflow is stable.
+1. Add evidence snippets to generated review signals.
+2. Add a mock transcript text ingestion endpoint.
+3. Add a mock document/OCR text ingestion endpoint.
+4. Extend the fictional evaluation dataset with context-event scenarios.
+5. Add optional adapters for transcription, OCR or LLM extraction only after the mock workflow is stable.
 
 Each step should keep fictional data, human review and auditability as default design constraints.
 

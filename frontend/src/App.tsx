@@ -1,6 +1,9 @@
 import { FormEvent, useEffect, useMemo, useState, type ReactNode } from "react";
 import { api } from "./api";
 import type {
+  ContextEvent,
+  ContextSourceType,
+  CreateContextEventPayload,
   CreateIntakePayload,
   CreateMedicationPayload,
   IntakeDetail,
@@ -40,6 +43,26 @@ const initialMedicationForm: MedicationFormState = {
   source: "Unknown",
   prescribedBy: "",
   notes: ""
+};
+
+const initialContextEventForm: ContextEventFormState = {
+  sourceType: "ManualNote",
+  sourceLabel: "",
+  content: "",
+  capturedAt: "",
+  createdBy: "demo-user",
+  confidenceScore: "",
+  metadataJson: ""
+};
+
+type ContextEventFormState = {
+  sourceType: ContextSourceType;
+  sourceLabel: string;
+  content: string;
+  capturedAt: string;
+  createdBy: string;
+  confidenceScore: string;
+  metadataJson: string;
 };
 
 type MedicationFormState = {
@@ -387,6 +410,8 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
         </article>
       </div>
 
+      <ContextEventsSection intake={intake} busy={busy} runAction={runAction} />
+
       <MedicationContextSection intake={intake} busy={busy} runAction={runAction} />
 
       <div className="detail-grid">
@@ -425,6 +450,148 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
         </article>
       </div>
     </section>
+  );
+}
+
+function ContextEventsSection({
+  intake,
+  busy,
+  runAction
+}: {
+  intake: IntakeDetail;
+  busy: boolean;
+  runAction: (action: () => Promise<IntakeDetail>) => Promise<void>;
+}) {
+  const [form, setForm] = useState<ContextEventFormState>(initialContextEventForm);
+
+  async function handleContextSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await runAction(async () => {
+      await api.addContextEvent(intake.id, toContextEventPayload(form));
+      return api.getIntake(intake.id);
+    });
+    setForm(initialContextEventForm);
+  }
+
+  return (
+    <section className="panel context-events">
+      <div className="section-heading">
+        <div>
+          <h2>Context Sources</h2>
+          <p>Text context is stored with source provenance for workflow support and human review.</p>
+        </div>
+      </div>
+
+      <form className="context-form" onSubmit={handleContextSubmit}>
+        <div className="form-grid">
+          <label>
+            Source type
+            <select
+              value={form.sourceType}
+              onChange={(event) => setForm({ ...form, sourceType: event.target.value as ContextSourceType })}
+            >
+              <option value="IntakeText">Intake text</option>
+              <option value="TranscriptText">Transcript text</option>
+              <option value="DocumentText">Document/OCR text</option>
+              <option value="MedicationHistory">Medication history</option>
+              <option value="ManualNote">Manual note</option>
+            </select>
+          </label>
+          <label>
+            Source label
+            <input
+              required
+              value={form.sourceLabel}
+              onChange={(event) => setForm({ ...form, sourceLabel: event.target.value })}
+              placeholder="Family call transcript"
+            />
+          </label>
+          <label>
+            Captured at
+            <input
+              type="datetime-local"
+              value={form.capturedAt}
+              onChange={(event) => setForm({ ...form, capturedAt: event.target.value })}
+            />
+          </label>
+          <label>
+            Created by
+            <input
+              required
+              value={form.createdBy}
+              onChange={(event) => setForm({ ...form, createdBy: event.target.value })}
+            />
+          </label>
+          <label>
+            Confidence score
+            <input
+              min={0}
+              max={1}
+              step={0.01}
+              type="number"
+              value={form.confidenceScore}
+              onChange={(event) => setForm({ ...form, confidenceScore: event.target.value })}
+              placeholder="Optional, 0 to 1"
+            />
+          </label>
+          <label>
+            Metadata JSON
+            <input
+              value={form.metadataJson}
+              onChange={(event) => setForm({ ...form, metadataJson: event.target.value })}
+              placeholder='Optional, e.g. {"page":1}'
+            />
+          </label>
+        </div>
+        <label>
+          Context content
+          <textarea
+            required
+            rows={4}
+            value={form.content}
+            onChange={(event) => setForm({ ...form, content: event.target.value })}
+            placeholder="Fictional source text only. Do not enter real patient data."
+          />
+        </label>
+        <div className="form-actions">
+          <button type="submit" disabled={busy}>
+            Add context source
+          </button>
+        </div>
+      </form>
+
+      <ContextEventList contextEvents={intake.contextEvents} />
+    </section>
+  );
+}
+
+function ContextEventList({ contextEvents }: { contextEvents: ContextEvent[] }) {
+  return (
+    <article className="subpanel">
+      <h3>Captured Context</h3>
+      {contextEvents.length === 0 ? (
+        <p className="empty">No additional context sources recorded yet.</p>
+      ) : (
+        <div className="context-event-list">
+          {contextEvents.map((contextEvent) => (
+            <div className="context-event-item" key={contextEvent.id}>
+              <div className="context-event-title">
+                <strong>{contextEvent.sourceLabel}</strong>
+                <span>{formatContextSourceType(contextEvent.sourceType)}</span>
+              </div>
+              <small>
+                Captured {formatDate(contextEvent.capturedAt)} · added by {contextEvent.createdBy}
+                {contextEvent.confidenceScore === null
+                  ? ""
+                  : ` · confidence ${Math.round(contextEvent.confidenceScore * 100)}%`}
+              </small>
+              <p>{contextEvent.content}</p>
+              {contextEvent.metadataJson && <code>{contextEvent.metadataJson}</code>}
+            </div>
+          ))}
+        </div>
+      )}
+    </article>
   );
 }
 
@@ -731,6 +898,25 @@ function SummaryRow({ title, body }: { title: string; body: string }) {
   );
 }
 
+function toContextEventPayload(form: ContextEventFormState): CreateContextEventPayload {
+  const clean = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  };
+
+  const confidence = clean(form.confidenceScore);
+
+  return {
+    sourceType: form.sourceType,
+    sourceLabel: form.sourceLabel.trim(),
+    content: form.content.trim(),
+    capturedAt: clean(form.capturedAt),
+    createdBy: form.createdBy.trim(),
+    confidenceScore: confidence === null ? null : Number(confidence),
+    metadataJson: clean(form.metadataJson)
+  };
+}
+
 function toMedicationPayload(form: MedicationFormState): CreateMedicationPayload {
   const clean = (value: string) => {
     const trimmed = value.trim();
@@ -784,6 +970,18 @@ function formatMedicationQualityStatus(status: MedicationDocumentationQuality["s
   };
 
   return labels[status];
+}
+
+function formatContextSourceType(sourceType: ContextSourceType) {
+  const labels: Record<ContextSourceType, string> = {
+    IntakeText: "Intake text",
+    TranscriptText: "Transcript text",
+    DocumentText: "Document/OCR text",
+    MedicationHistory: "Medication history",
+    ManualNote: "Manual note"
+  };
+
+  return labels[sourceType];
 }
 
 function formatMedicationTiming(medication: MedicationEntry) {

@@ -243,6 +243,7 @@ textarea {
 
 .summary-list,
 .flag-list,
+.context-event-list,
 .medication-list,
 .timeline,
 .queue-list {
@@ -270,6 +271,18 @@ textarea {
 .medication-context {
   display: grid;
   gap: 1rem;
+}
+
+.context-events {
+  display: grid;
+  gap: 1rem;
+}
+
+.context-form {
+  border-top: 1px solid #edf1f7;
+  display: grid;
+  gap: 1rem;
+  padding-top: 1rem;
 }
 
 .medication-form {
@@ -341,6 +354,53 @@ textarea {
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   padding: 0.85rem;
+}
+
+.context-event-item {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.85rem;
+}
+
+.context-event-title {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.context-event-title span {
+  background: #e6edf7;
+  border-radius: 999px;
+  color: #1f2a44;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 0.35rem 0.55rem;
+  white-space: nowrap;
+}
+
+.context-event-item small {
+  color: #667085;
+}
+
+.context-event-item p {
+  color: #4b5567;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.context-event-item code {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #334155;
+  display: block;
+  font-size: 0.82rem;
+  overflow-x: auto;
+  padding: 0.5rem;
 }
 
 .medication-title {

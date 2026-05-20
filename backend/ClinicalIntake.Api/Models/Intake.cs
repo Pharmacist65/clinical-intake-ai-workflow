@@ -13,6 +13,7 @@ public sealed class Intake
 
     public AiSummary? AiSummary { get; set; }
     public List<RiskFlag> RiskFlags { get; set; } = [];
+    public List<ContextEvent> ContextEvents { get; set; } = [];
     public List<MedicationEntry> MedicationEntries { get; set; } = [];
     public List<MedicationSignal> MedicationSignals { get; set; } = [];
     public List<AuditLog> AuditLogs { get; set; } = [];

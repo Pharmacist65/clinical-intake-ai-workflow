@@ -1,4 +1,6 @@
 import type {
+  ContextEvent,
+  CreateContextEventPayload,
   CreateIntakePayload,
   CreateMedicationPayload,
   IntakeDetail,
@@ -46,6 +48,12 @@ export const api = {
     request<IntakeDetail>(`/api/intakes/${id}/generate-summary`, {
       method: "POST"
     }),
+  addContextEvent: (id: number, payload: CreateContextEventPayload) =>
+    request<ContextEvent>(`/api/intakes/${id}/context-events`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  listContextEvents: (id: number) => request<ContextEvent[]>(`/api/intakes/${id}/context-events`),
   addMedication: (id: number, payload: CreateMedicationPayload) =>
     request<MedicationEntry>(`/api/intakes/${id}/medications`, {
       method: "POST",

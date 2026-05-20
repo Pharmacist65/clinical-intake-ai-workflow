@@ -1,5 +1,6 @@
 export type ReviewStatus = "New" | "NeedsReview" | "Reviewed";
 export type RiskSeverity = "Low" | "Medium" | "High";
+export type ContextSourceType = "IntakeText" | "TranscriptText" | "DocumentText" | "MedicationHistory" | "ManualNote";
 export type MedicationCategory = "Current" | "Recent" | "Past" | "OTC" | "FamilyHousehold";
 export type MedicationSource = "PatientReported" | "FamilyReported" | "ClinicianReported" | "Unknown";
 
@@ -25,6 +26,7 @@ export interface IntakeDetail {
   createdBy: string;
   aiSummary: AiSummary | null;
   riskFlags: RiskFlag[];
+  contextEvents: ContextEvent[];
   medicationEntries: MedicationEntry[];
   medicationSignals: MedicationSignal[];
   medicationDocumentationQuality: MedicationDocumentationQuality;
@@ -58,6 +60,19 @@ export interface AuditLog {
   actor: string;
   timestamp: string;
   details: string;
+}
+
+export interface ContextEvent {
+  id: number;
+  intakeId: number;
+  sourceType: ContextSourceType;
+  sourceLabel: string;
+  content: string;
+  capturedAt: string;
+  createdBy: string;
+  confidenceScore: number | null;
+  metadataJson: string | null;
+  createdAt: string;
 }
 
 export interface MedicationEntry {
@@ -134,4 +149,14 @@ export interface CreateMedicationPayload {
   source: MedicationSource;
   prescribedBy: string | null;
   notes: string | null;
+}
+
+export interface CreateContextEventPayload {
+  sourceType: ContextSourceType;
+  sourceLabel: string;
+  content: string;
+  capturedAt: string | null;
+  createdBy: string;
+  confidenceScore: number | null;
+  metadataJson: string | null;
 }

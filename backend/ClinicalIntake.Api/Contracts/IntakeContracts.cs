@@ -33,6 +33,7 @@ public sealed record IntakeDetailResponse(
     string CreatedBy,
     AiSummaryResponse? AiSummary,
     IReadOnlyList<RiskFlagResponse> RiskFlags,
+    IReadOnlyList<ContextEventResponse> ContextEvents,
     IReadOnlyList<MedicationEntryResponse> MedicationEntries,
     IReadOnlyList<MedicationSignalResponse> MedicationSignals,
     MedicationDocumentationQualityResponse MedicationDocumentationQuality,

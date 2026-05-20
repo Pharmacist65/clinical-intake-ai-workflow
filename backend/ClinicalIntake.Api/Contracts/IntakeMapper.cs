@@ -32,6 +32,11 @@ public static class IntakeMapper
                 .ThenBy(flag => flag.Label)
                 .Select(ToRiskFlagResponse)
                 .ToList(),
+            intake.ContextEvents
+                .OrderByDescending(contextEvent => contextEvent.CapturedAt)
+                .ThenByDescending(contextEvent => contextEvent.CreatedAt)
+                .Select(ToContextEventResponse)
+                .ToList(),
             intake.MedicationEntries
                 .OrderByDescending(medication => medication.StartedAt ?? medication.CreatedAt)
                 .ThenBy(medication => medication.MedicationName)
@@ -118,6 +123,19 @@ public static class IntakeMapper
 
     private static RiskFlagResponse ToRiskFlagResponse(RiskFlag flag) =>
         new(flag.Id, flag.IntakeId, flag.Label, flag.Severity.ToString(), flag.Reason);
+
+    public static ContextEventResponse ToContextEventResponse(ContextEvent contextEvent) =>
+        new(
+            contextEvent.Id,
+            contextEvent.IntakeId,
+            contextEvent.SourceType.ToString(),
+            contextEvent.SourceLabel,
+            contextEvent.Content,
+            contextEvent.CapturedAt,
+            contextEvent.CreatedBy,
+            contextEvent.ConfidenceScore,
+            contextEvent.MetadataJson,
+            contextEvent.CreatedAt);
 
     private static MedicationDocumentationIssueResponse ToMedicationDocumentationIssueResponse(
         MedicationDocumentationIssue issue) =>

@@ -94,8 +94,46 @@ public sealed class IntakeApiIntegrationTests : IClassFixture<ClinicalIntakeApiF
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains("/api/intakes", body, StringComparison.Ordinal);
+        Assert.Contains("/api/intakes/{id}/context-events", body, StringComparison.Ordinal);
         Assert.Contains("/api/intakes/{id}/medication-documentation-quality", body, StringComparison.Ordinal);
         Assert.Contains("Clinical Intake AI Workflow API", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ContextEventEndpoints_CreateAndListContextEvents()
+    {
+        var createResponse = await _client.PostAsJsonAsync("/api/intakes", new CreateIntakeRequest(
+            "API Patient Context",
+            13,
+            "Family reports school concerns and a follow-up note from a fictional transcript.",
+            "api integration test",
+            "api-test"));
+        var created = await createResponse.Content.ReadFromJsonAsync<IntakeDetailResponse>();
+
+        Assert.NotNull(created);
+
+        var contextResponse = await _client.PostAsJsonAsync(
+            $"/api/intakes/{created.Id}/context-events",
+            new CreateContextEventRequest(
+                "TranscriptText",
+                "Fictional family call transcript",
+                "Family described sleep disruption and school support needs.",
+                null,
+                "api-test",
+                0.88m,
+                null));
+
+        Assert.Equal(HttpStatusCode.Created, contextResponse.StatusCode);
+        var contextEvent = await contextResponse.Content.ReadFromJsonAsync<ContextEventResponse>();
+        Assert.NotNull(contextEvent);
+        Assert.Equal("TranscriptText", contextEvent.SourceType);
+
+        var listResponse = await _client.GetAsync($"/api/intakes/{created.Id}/context-events");
+
+        listResponse.EnsureSuccessStatusCode();
+        var contextEvents = await listResponse.Content.ReadFromJsonAsync<IReadOnlyList<ContextEventResponse>>();
+        Assert.NotNull(contextEvents);
+        Assert.Contains(contextEvents, item => item.Id == contextEvent.Id);
     }
 
     [Fact]

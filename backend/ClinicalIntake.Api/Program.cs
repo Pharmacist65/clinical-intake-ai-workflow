@@ -193,6 +193,39 @@ app.MapGet("/api/intakes/{id:int}/audit-log", async (
     .WithName("GetAuditLog")
     .WithTags("Audit");
 
+app.MapPost("/api/intakes/{id:int}/context-events", async (
+    int id,
+    CreateContextEventRequest request,
+    IntakeWorkflowService workflow,
+    CancellationToken cancellationToken) =>
+{
+    var validation = IntakeRequestValidator.ValidateContextEvent(request);
+    if (!validation.IsValid)
+    {
+        return ApiErrors.Validation(validation);
+    }
+
+    var contextEvent = await workflow.AddContextEventAsync(id, request, cancellationToken);
+    return contextEvent is null
+        ? ApiErrors.NotFound("Intake")
+        : Results.Created($"/api/intakes/{id}/context-events/{contextEvent.Id}", IntakeMapper.ToContextEventResponse(contextEvent));
+})
+    .WithName("AddContextEvent")
+    .WithTags("Context Events");
+
+app.MapGet("/api/intakes/{id:int}/context-events", async (
+    int id,
+    IntakeWorkflowService workflow,
+    CancellationToken cancellationToken) =>
+{
+    var contextEvents = await workflow.ListContextEventsAsync(id, cancellationToken);
+    return contextEvents is null
+        ? ApiErrors.NotFound("Intake")
+        : Results.Ok(contextEvents.Select(IntakeMapper.ToContextEventResponse));
+})
+    .WithName("ListContextEvents")
+    .WithTags("Context Events");
+
 app.MapPost("/api/intakes/{id:int}/medications", async (
     int id,
     CreateMedicationEntryRequest request,

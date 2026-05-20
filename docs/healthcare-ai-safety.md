@@ -7,6 +7,7 @@ This project treats AI as a workflow assistant. It does not present AI output as
 The safest first version of this idea is not a powerful model hidden behind an API key. It is a transparent workflow that:
 
 - Preserves the original intake text
+- Preserves additional fictional text context with source provenance
 - Produces a clearly labelled support summary
 - Flags simple priority terms
 - Captures medication-history context as review questions
@@ -40,6 +41,7 @@ The reviewer can inspect:
 - AI-style structured summary
 - Risk flags and reasons
 - Confidence score
+- Captured context sources and source labels
 - Medication timeline and medication review questions
 - Medication documentation quality issues
 - Audit log
@@ -89,6 +91,7 @@ Every generated summary includes:
 The audit log records:
 
 - Intake creation
+- Context event creation
 - Summary generation
 - Medication entry creation
 - Medication context analysis
