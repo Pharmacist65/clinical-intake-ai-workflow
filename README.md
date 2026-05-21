@@ -33,6 +33,7 @@ This application focuses on that workflow:
 - Context source provenance: fictional text-derived context sources, including mock transcript and document text, can be stored with source type, label, author, timing, confidence, and audit history
 - Evidence-linked review signals: risk flags and medication signals include short source snippets when deterministic rules are triggered
 - Interoperability thinking: a FHIR-style fictional export maps intake, medication context, provenance, task state, and audit events without connecting to external systems
+- Production awareness: deployment requirements are documented separately from the local Docker setup, including migrations, secrets, auth, monitoring, and safety governance
 - Safe applied AI design: deterministic mock AI, no API keys required, confidence scoring, disclaimers, and constrained output
 - Human-in-the-loop review: high-risk or low-confidence cases are routed to `NeedsReview`
 - Auditability: intake creation, summary generation, medication context analysis, review notes, and review status updates are recorded
@@ -107,6 +108,14 @@ The project includes a FHIR/HL7 concept document and a small FHIR-style fictiona
 See [docs/fhir-hl7-integration-concept.md](docs/fhir-hl7-integration-concept.md) for the conceptual mapping between internal models such as `Intake`, `MedicationEntry`, `MedicationSignal`, `ReviewStatus`, and possible FHIR concepts such as `QuestionnaireResponse`, `MedicationStatement`, `Task`, `Provenance`, and `AuditEvent`.
 
 The export is intentionally FHIR-style rather than a validated FHIR implementation. The current application does not connect to NHS systems, EHRs, pharmacy systems, FHIR servers, or HL7 message feeds.
+
+## Production Deployment Design
+
+The repository includes a production deployment design document that explains what would be required before this workflow could be considered for a real healthcare environment.
+
+See [docs/production-deployment-design.md](docs/production-deployment-design.md) for the proposed production shape, environment configuration, database migration expectations, authentication and RBAC, audit requirements, monitoring, data protection boundaries, release process, and readiness checklist.
+
+The current Docker Compose setup remains local-development-only. This project is not deployed or production hardened.
 
 ## Multimodal Clinical Context Concept
 
@@ -586,6 +595,7 @@ Generated summaries always include:
 - No authentication, role-based access control, or production security hardening is implemented.
 - SQLite and `EnsureCreated` are used for local development simplicity.
 - The application is not deployed or monitored as a production service.
+- Production deployment requirements are documented, not implemented.
 
 ## Future Improvements
 
@@ -597,7 +607,7 @@ Planned improvements, not currently implemented:
 - Optional OCR/document extraction adapter for fictional or approved non-patient documents only
 - Optional speech-to-text adapter for fictional or approved non-patient transcripts only
 - Role-based access control
-- Production deployment design
+- Production deployment implementation
 - Observability and monitoring
 - Larger synthetic evaluation dataset for workflow routing and summary behaviour
 

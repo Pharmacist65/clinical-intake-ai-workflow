@@ -66,7 +66,7 @@ Human review is central to the design:
 
 I chose a small architecture instead of a complex one. The first version has no authentication, no production deployment, no real LLM integration and no live FHIR/HL7 integration. That is intentional for a small MVP: the priority is to show clean workflow modelling, safe AI framing and understandable code.
 
-SQLite and `EnsureCreated` keep setup simple. I added Docker Compose as a local development convenience, but not as production infrastructure. In production, I would use migrations, environment-specific configuration and managed database infrastructure.
+SQLite and `EnsureCreated` keep setup simple. I added Docker Compose as a local development convenience, but not as production infrastructure. I also documented the production deployment design separately: in production I would use migrations, managed database infrastructure, authentication, role-based access, managed secrets, structured monitoring and a clinical/data-protection review process.
 
 ## What I Would Improve Next
 
@@ -77,7 +77,7 @@ The next improvements I would discuss are:
 - Consider an optional speech-to-text adapter later, disabled by default and never required for the local demo.
 - Consider an optional OCR/document extraction adapter later, disabled by default and never required for the local demo.
 - Add role-based access control for reviewers and administrators.
-- Add production deployment documentation beyond the local Docker Compose setup.
+- Implement production hardening based on the deployment design once requirements are known.
 - Add structured observability for summary generation, review queue volume and failure modes.
 - Expand the synthetic evaluation dataset with more fictional workflow scenarios and edge cases.
 - Document a production integration boundary for any future real FHIR/HL7 adapter.

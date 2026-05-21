@@ -130,3 +130,5 @@ A real system would need:
 - Monitoring for model, data and workflow drift
 - Incident reporting and rollback processes
 - Integration review for FHIR, HL7 or local EHR interfaces
+
+See [production-deployment-design.md](production-deployment-design.md) for the production deployment readiness checklist and operational boundaries.

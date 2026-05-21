@@ -58,6 +58,8 @@ The repository includes Dockerfiles for the backend and frontend plus a root `do
 
 This is a developer convenience, not a production deployment design. Production hosting would need proper migrations, secrets management, authentication, monitoring, HTTPS termination and environment-specific infrastructure.
 
+See [production-deployment-design.md](production-deployment-design.md) for the production deployment considerations and readiness checklist.
+
 ### Mock AI Service
 
 `MockAiSummaryService` is deterministic. It scans for configured terms and produces:
