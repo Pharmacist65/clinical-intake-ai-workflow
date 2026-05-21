@@ -185,3 +185,16 @@ export interface CreateDocumentContextPayload {
   documentType: string | null;
   pageReference: string | null;
 }
+
+export interface FhirStyleExport {
+  resourceType: "Bundle";
+  exportMode: string;
+  disclaimer: string;
+  generatedAt: string;
+  patient: Record<string, unknown>;
+  intakeQuestionnaireResponse: Record<string, unknown>;
+  reviewTask: Record<string, unknown>;
+  medicationStatements: Record<string, unknown>[];
+  provenance: Record<string, unknown>[];
+  auditEvents: Record<string, unknown>[];
+}

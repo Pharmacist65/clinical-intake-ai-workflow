@@ -8,6 +8,7 @@ import type {
   CreateIntakePayload,
   CreateMedicationPayload,
   CreateTranscriptContextPayload,
+  FhirStyleExport,
   IntakeDetail,
   IntakeListItem,
   MedicationCategory,
@@ -353,10 +354,12 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reviewNote, setReviewNote] = useState("");
+  const [fhirExport, setFhirExport] = useState<FhirStyleExport | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setReviewNote("");
+    setFhirExport(null);
     api
       .getIntake(intakeId)
       .then(setIntake)
@@ -369,8 +372,21 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
     setError(null);
     try {
       setIntake(await action());
+      setFhirExport(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Action failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadFhirStyleExport() {
+    setBusy(true);
+    setError(null);
+    try {
+      setFhirExport(await api.getFhirStyleExport(intakeId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load FHIR-style export");
     } finally {
       setBusy(false);
     }
@@ -408,6 +424,9 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
           onClick={markReviewed}
         >
           Mark reviewed
+        </button>
+        <button className="secondary" disabled={busy} onClick={loadFhirStyleExport}>
+          View FHIR-style export
         </button>
       </div>
 
@@ -453,6 +472,8 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
       <ContextEventsSection intake={intake} busy={busy} runAction={runAction} />
 
       <MedicationContextSection intake={intake} busy={busy} runAction={runAction} />
+
+      {fhirExport && <FhirStyleExportPanel exportData={fhirExport} />}
 
       <div className="detail-grid">
         <article className="panel">
@@ -1024,6 +1045,21 @@ function MedicationSignals({ signals }: { signals: MedicationSignal[] }) {
         </div>
       )}
     </article>
+  );
+}
+
+function FhirStyleExportPanel({ exportData }: { exportData: FhirStyleExport }) {
+  return (
+    <section className="panel fhir-export">
+      <div className="section-heading">
+        <div>
+          <h2>FHIR-Style Export</h2>
+          <p>Fictional interoperability example only. This is not a live EHR/FHIR integration.</p>
+        </div>
+      </div>
+      <p className="disclaimer">{exportData.disclaimer}</p>
+      <pre className="json-preview">{JSON.stringify(exportData, null, 2)}</pre>
+    </section>
   );
 }
 

@@ -2,7 +2,7 @@
 
 This document explains how the current workflow could relate to healthcare interoperability standards in a future version.
 
-It is a concept document only. The current application does not implement FHIR, HL7, NHS, EHR, pharmacy-system, or hospital-system integration.
+It is primarily a concept document. The current application also includes a small FHIR-style fictional export endpoint for local demonstration, but it does not implement validated FHIR, HL7, NHS, EHR, pharmacy-system, or hospital-system integration.
 
 ## Why Interoperability Matters
 
@@ -77,6 +77,23 @@ Human review UI and audit log
 
 This keeps the project understandable and allows the internal workflow to remain stable while external integrations evolve.
 
+## Implemented FHIR-Style Export
+
+The MVP includes:
+
+- `GET /api/intakes/{id}/fhir-style-export`
+
+This endpoint maps one local intake into a fictional JSON bundle with FHIR-like resource names:
+
+- `Patient` for fictional alias and age
+- `QuestionnaireResponse` for original intake text and source details
+- `Task` for local human review status
+- `MedicationStatement` for captured medication-history entries
+- `Provenance` for captured context sources
+- `AuditEvent` for workflow audit log entries
+
+The export is intentionally labelled as fictional. It is not a validated FHIR bundle, does not use organisation-specific profiles, does not include real patient identifiers, and does not connect to an external system.
+
 ## Safety Boundaries
 
 A future FHIR or HL7 adapter would not change the safety position of the app.
@@ -114,13 +131,13 @@ None of those are implemented in this MVP.
 
 ## What Could Be Built Later
 
-A sensible next implementation step would be a small internal export mapper, not a live EHR connection.
+A sensible next implementation step would be a real integration boundary design, not a live EHR connection.
 
 For example:
 
-- map an `Intake` detail response to a simplified FHIR-like JSON example
-- add a fictional `MedicationStatement` export for `MedicationEntry`
-- add a fictional `AuditEvent` export for workflow actions
-- keep all examples synthetic and clearly labelled as non-production
+- define where a future FHIR adapter would live outside the core workflow service
+- document authentication, authorization, environment configuration and audit requirements
+- keep any integration examples synthetic and clearly labelled as non-production
+- avoid adding live EHR connectivity until governance and data protection requirements are understood
 
 That would demonstrate interoperability thinking while keeping the project safe, readable, and runnable without external systems.

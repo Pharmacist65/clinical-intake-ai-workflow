@@ -5,6 +5,7 @@ import type {
   CreateIntakePayload,
   CreateMedicationPayload,
   CreateTranscriptContextPayload,
+  FhirStyleExport,
   IntakeDetail,
   IntakeListItem,
   MedicationDocumentationQuality,
@@ -79,6 +80,7 @@ export const api = {
   listMedicationSignals: (id: number) => request<MedicationSignal[]>(`/api/intakes/${id}/medication-signals`),
   getMedicationDocumentationQuality: (id: number) =>
     request<MedicationDocumentationQuality>(`/api/intakes/${id}/medication-documentation-quality`),
+  getFhirStyleExport: (id: number) => request<FhirStyleExport>(`/api/intakes/${id}/fhir-style-export`),
   listReviewQueue: () => request<ReviewQueueItem[]>("/api/review-queue"),
   updateReviewStatus: (id: number, reviewStatus: ReviewStatus, reviewNote?: string | null, actor = "demo-reviewer") =>
     request<IntakeDetail>(`/api/intakes/${id}/review-status`, {

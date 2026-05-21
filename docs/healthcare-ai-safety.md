@@ -10,6 +10,7 @@ The safest first version of this idea is not a powerful model hidden behind an A
 - Preserves additional fictional text context with source provenance
 - Captures pasted mock transcript text as fictional text context only
 - Captures pasted mock document/OCR text as fictional text context only
+- Provides a FHIR-style fictional export for interoperability discussion only
 - Produces a clearly labelled support summary
 - Flags simple priority terms
 - Captures medication-history context as review questions
@@ -30,6 +31,7 @@ The app does not:
 - Use real patient data
 - Process real audio, perform speech-to-text, or identify speakers
 - Process real images, perform OCR, or parse real clinical documents
+- Implement live FHIR, HL7, NHS, EHR, or pharmacy-system integration
 
 ## Human-In-The-Loop Controls
 

@@ -480,6 +480,25 @@ textarea {
   margin: 0;
 }
 
+.fhir-export {
+  display: grid;
+  gap: 1rem;
+}
+
+.json-preview {
+  background: #0f172a;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0;
+  max-height: 30rem;
+  overflow: auto;
+  padding: 1rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .summary-row {
   border-bottom: 1px solid #edf1f7;
   padding-bottom: 0.75rem;

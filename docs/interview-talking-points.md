@@ -38,7 +38,7 @@ The backend separates concerns:
 
 This keeps the project readable and testable.
 
-I also added a FHIR/HL7 concept document to show how the internal models could later map to healthcare interoperability concepts such as `QuestionnaireResponse`, `MedicationStatement`, `Task`, `Provenance` and `AuditEvent`. It is intentionally documentation-only: the app does not connect to a real EHR, pharmacy system, FHIR server or HL7 message feed.
+I also added a FHIR/HL7 concept document and a FHIR-style fictional export to show how the internal models could later map to healthcare interoperability concepts such as `QuestionnaireResponse`, `MedicationStatement`, `Task`, `Provenance` and `AuditEvent`. I would be explicit that this is not a validated FHIR implementation and the app does not connect to a real EHR, pharmacy system, FHIR server or HL7 message feed.
 
 The test suite also includes a small fictional evaluation dataset. Each case defines expected workflow behaviour, such as review routing, risk labels, medication review signals and medication documentation quality. I would describe this as regression testing for deterministic workflow rules, not as clinical validation.
 
@@ -80,4 +80,4 @@ The next improvements I would discuss are:
 - Add production deployment documentation beyond the local Docker Compose setup.
 - Add structured observability for summary generation, review queue volume and failure modes.
 - Expand the synthetic evaluation dataset with more fictional workflow scenarios and edge cases.
-- Add fictional FHIR-style export examples for intake, medication context and audit events, while keeping identifiable patient data out of the demo.
+- Document a production integration boundary for any future real FHIR/HL7 adapter.

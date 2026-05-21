@@ -98,6 +98,7 @@ public sealed class IntakeApiIntegrationTests : IClassFixture<ClinicalIntakeApiF
         Assert.Contains("/api/intakes/{id}/transcript-context", body, StringComparison.Ordinal);
         Assert.Contains("/api/intakes/{id}/document-context", body, StringComparison.Ordinal);
         Assert.Contains("/api/intakes/{id}/medication-documentation-quality", body, StringComparison.Ordinal);
+        Assert.Contains("/api/intakes/{id}/fhir-style-export", body, StringComparison.Ordinal);
         Assert.Contains("Clinical Intake AI Workflow API", body, StringComparison.Ordinal);
     }
 
@@ -239,6 +240,59 @@ public sealed class IntakeApiIntegrationTests : IClassFixture<ClinicalIntakeApiF
         Assert.Equal("Incomplete", quality.Status);
         Assert.Contains(quality.Issues, issue => issue.Field == "source");
         Assert.Contains("not a clinical risk score", quality.Disclaimer, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task FhirStyleExportEndpoint_ReturnsFictionalInteroperabilityExample()
+    {
+        var createResponse = await _client.PostAsJsonAsync("/api/intakes", new CreateIntakeRequest(
+            "API Patient Export",
+            9,
+            "Family reports school concerns and sleep disruption.",
+            "api integration test",
+            "api-test"));
+        var created = await createResponse.Content.ReadFromJsonAsync<IntakeDetailResponse>();
+
+        Assert.NotNull(created);
+
+        await _client.PostAsJsonAsync($"/api/intakes/{created.Id}/medications", new CreateMedicationEntryRequest(
+            "Cetirizine",
+            "Current",
+            "5 mg",
+            "oral",
+            "once daily",
+            null,
+            null,
+            "Allergy symptoms",
+            "FamilyReported",
+            null,
+            "Fictional medication context only."));
+
+        await _client.PostAsJsonAsync(
+            $"/api/intakes/{created.Id}/document-context",
+            new CreateDocumentContextRequest(
+                "Mock referral note",
+                "Fictional referral note describes school support needs.",
+                null,
+                "api-test",
+                0.87m,
+                "Referral note",
+                "page 1"));
+
+        var response = await _client.GetAsync($"/api/intakes/{created.Id}/fhir-style-export");
+
+        response.EnsureSuccessStatusCode();
+        var export = await response.Content.ReadFromJsonAsync<FhirStyleExportResponse>();
+
+        Assert.NotNull(export);
+        Assert.Equal("Bundle", export.ResourceType);
+        Assert.Contains("not a validated FHIR implementation", export.Disclaimer, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Patient", export.Patient.ResourceType);
+        Assert.Equal("QuestionnaireResponse", export.IntakeQuestionnaireResponse.ResourceType);
+        Assert.Equal("Task", export.ReviewTask.ResourceType);
+        Assert.Contains(export.MedicationStatements, item => item.ResourceType == "MedicationStatement");
+        Assert.Contains(export.Provenance, item => item.SourceType == "DocumentText");
+        Assert.Contains(export.AuditEvents, item => item.Action == "IntakeCreated");
     }
 }
 

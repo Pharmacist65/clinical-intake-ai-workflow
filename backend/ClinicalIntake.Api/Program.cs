@@ -338,6 +338,19 @@ app.MapGet("/api/intakes/{id:int}/medication-documentation-quality", async (
     .WithName("GetMedicationDocumentationQuality")
     .WithTags("Medication Context");
 
+app.MapGet("/api/intakes/{id:int}/fhir-style-export", async (
+    int id,
+    IntakeWorkflowService workflow,
+    CancellationToken cancellationToken) =>
+{
+    var intake = await workflow.GetIntakeAsync(id, cancellationToken);
+    return intake is null
+        ? ApiErrors.NotFound("Intake")
+        : Results.Ok(FhirStyleExportMapper.ToExport(intake));
+})
+    .WithName("GetFhirStyleExport")
+    .WithTags("Interoperability");
+
 app.Run();
 
 public partial class Program;

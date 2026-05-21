@@ -87,7 +87,7 @@ This is not a prescribing tool, diagnosis tool, autonomous triage system or real
 
 ### Interoperability Concept
 
-The project includes a FHIR/HL7 integration concept document, but no live integration. The intent is to show how the internal workflow could later map to healthcare interoperability concepts while keeping the MVP small.
+The project includes a FHIR/HL7 integration concept document and a FHIR-style fictional export endpoint, but no live integration. The intent is to show how the internal workflow could later map to healthcare interoperability concepts while keeping the MVP small.
 
 Possible conceptual mappings include:
 
@@ -95,6 +95,8 @@ Possible conceptual mappings include:
 - `MedicationEntry` to `MedicationStatement`
 - `ReviewStatus` to workflow state such as `Task.status`
 - `AuditLog` to `AuditEvent` or `Provenance`
+
+The export endpoint returns a local fictional bundle with FHIR-like resource names. It is not a validated FHIR implementation and does not connect to a FHIR server, EHR, NHS service, pharmacy system or HL7 feed.
 
 See [fhir-hl7-integration-concept.md](fhir-hl7-integration-concept.md) for the full mapping and safety boundaries.
 

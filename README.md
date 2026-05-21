@@ -32,6 +32,7 @@ This application focuses on that workflow:
 - Pharmacy context layer: medication-history capture, documentation quality checks, pharmacist-review signals, and medication timeline
 - Context source provenance: fictional text-derived context sources, including mock transcript and document text, can be stored with source type, label, author, timing, confidence, and audit history
 - Evidence-linked review signals: risk flags and medication signals include short source snippets when deterministic rules are triggered
+- Interoperability thinking: a FHIR-style fictional export maps intake, medication context, provenance, task state, and audit events without connecting to external systems
 - Safe applied AI design: deterministic mock AI, no API keys required, confidence scoring, disclaimers, and constrained output
 - Human-in-the-loop review: high-risk or low-confidence cases are routed to `NeedsReview`
 - Auditability: intake creation, summary generation, medication context analysis, review notes, and review status updates are recorded
@@ -52,6 +53,7 @@ The app lets a care team user:
 8. Route high-risk or low-confidence cases to review.
 9. Mark cases as reviewed with an optional workflow review note.
 10. Inspect the audit log for key workflow actions.
+11. View a FHIR-style fictional export for interoperability discussion.
 
 ## Screenshots
 
@@ -100,11 +102,11 @@ The backend keeps HTTP handling thin. Request validation lives in small validato
 
 ## Interoperability Concept
 
-The project includes a FHIR/HL7 concept document to show how the internal workflow could later relate to healthcare interoperability standards without implementing a live EHR integration.
+The project includes a FHIR/HL7 concept document and a small FHIR-style fictional export endpoint to show how the internal workflow could later relate to healthcare interoperability standards without implementing a live EHR integration.
 
 See [docs/fhir-hl7-integration-concept.md](docs/fhir-hl7-integration-concept.md) for the conceptual mapping between internal models such as `Intake`, `MedicationEntry`, `MedicationSignal`, `ReviewStatus`, and possible FHIR concepts such as `QuestionnaireResponse`, `MedicationStatement`, `Task`, `Provenance`, and `AuditEvent`.
 
-This is documentation only. The current application does not connect to NHS systems, EHRs, pharmacy systems, FHIR servers, or HL7 message feeds.
+The export is intentionally FHIR-style rather than a validated FHIR implementation. The current application does not connect to NHS systems, EHRs, pharmacy systems, FHIR servers, or HL7 message feeds.
 
 ## Multimodal Clinical Context Concept
 
@@ -212,6 +214,7 @@ Unexpected failures return `500 Internal Server Error` with the same simple erro
 | `POST` | `/api/intakes/{id}/analyse-medication-context` | `200 OK` | Generate medication review signals |
 | `GET` | `/api/intakes/{id}/medication-signals` | `200 OK` | List medication review signals |
 | `GET` | `/api/intakes/{id}/medication-documentation-quality` | `200 OK` | Assess medication-history documentation completeness |
+| `GET` | `/api/intakes/{id}/fhir-style-export` | `200 OK` | Return a fictional FHIR-style interoperability example |
 
 ### Create Intake
 
@@ -425,6 +428,22 @@ Example response:
 }
 ```
 
+### FHIR-Style Export
+
+`GET /api/intakes/{id}/fhir-style-export`
+
+Returns a fictional export bundle for interoperability discussion. The response uses FHIR-like resource names such as `Patient`, `QuestionnaireResponse`, `Task`, `MedicationStatement`, `Provenance`, and `AuditEvent`, but it is not a validated FHIR implementation and does not connect to any external healthcare system.
+
+The export is intentionally limited to fictional local workflow data:
+
+- intake case and original note
+- local review status as a task-like resource
+- medication-history entries as medication-statement-like resources
+- context source provenance
+- workflow audit events
+
+This endpoint is for architecture review and interview discussion only. It must not be used with real patient data or treated as an EHR integration.
+
 ## Database Models
 
 ### Intake
@@ -538,6 +557,7 @@ The app is intentionally constrained:
 - It stores additional context sources with provenance instead of hiding them behind AI output.
 - It stores mock transcript text as pasted fictional text only; it does not process real audio or perform speech-to-text.
 - It stores mock document/OCR text as pasted fictional text only; it does not process images or perform OCR.
+- It provides a FHIR-style fictional export only; it does not implement FHIR, HL7, NHS, EHR, or pharmacy-system integration.
 - It uses deterministic mock AI rules in this version.
 - It includes a confidence score and safety disclaimer.
 - It shows evidence snippets for generated review signals where a deterministic rule matched source text.
@@ -559,6 +579,7 @@ Generated summaries always include:
 - The medication context layer is not a real drug-interaction engine.
 - The pharmacy context feature does not perform medication reconciliation, drug interaction checking, clinical decision support, prescribing advice, or diagnosis.
 - Context events, mock transcript inputs and mock document inputs are manually entered fictional text sources only; there is no real audio, OCR, image interpretation, or document processing pipeline.
+- The FHIR-style export is not a validated FHIR bundle and is not suitable for real healthcare integration.
 - Evidence snippets explain why a workflow prompt was created; they are not clinical proof or a complete safety assessment.
 - Keyword rules are simplistic and will miss clinical nuance.
 - Absence of a risk flag does not mean absence of clinical risk.
@@ -572,7 +593,7 @@ Planned improvements, not currently implemented:
 
 - Real LLM integration via API with an environment-variable based adapter
 - Retrieval-augmented generation over approved clinical policy documents
-- FHIR/HL7 adapter prototypes using fictional example payloads
+- Real FHIR/HL7 adapter prototypes using fictional example payloads
 - Optional OCR/document extraction adapter for fictional or approved non-patient documents only
 - Optional speech-to-text adapter for fictional or approved non-patient transcripts only
 - Role-based access control
