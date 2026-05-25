@@ -68,6 +68,15 @@ Benefits:
 
 This also avoids treating AI output as if it were inherently clinically safe. Here, the model-like component is constrained and inspectable.
 
+## AI Provider Boundary
+
+Summary generation is wired through a mock-first provider boundary. The default configuration is:
+
+- `AiSummary:Provider=Mock`
+- `AiSummary:ExternalProvidersEnabled=false`
+
+Only the deterministic mock provider is registered. Configuring another provider name fails unless a future adapter is explicitly implemented and registered. This keeps the default demo free of API keys, hidden model behaviour, real patient-data transmission, and unreviewed external AI dependencies.
+
 ## Risk Flag Rules
 
 Configured high-risk terms include:

@@ -33,7 +33,7 @@ The backend separates concerns:
 
 - API endpoints handle HTTP requests and responses.
 - `IntakeWorkflowService` owns workflow transitions, audit logs and status changes.
-- `MockAiSummaryService` owns deterministic summary and risk flag generation.
+- Deterministic summary and risk flag generation sit behind `IAiSummaryService`, with the `Mock` provider selected by default.
 - EF Core models represent intakes, summaries, risk flags and audit logs.
 
 This keeps the project readable and testable.

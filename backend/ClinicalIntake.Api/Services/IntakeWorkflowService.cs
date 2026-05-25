@@ -412,6 +412,7 @@ public sealed class IntakeWorkflowService(
             || result.RiskFlags.Any(flag => flag.Severity == RiskSeverity.High)
             || intake.MedicationSignals.Any(signal => signal.Severity == RiskSeverity.High);
         intake.ReviewStatus = requiresReview ? ReviewStatus.NeedsReview : ReviewStatus.New;
+        var providerName = aiSummaryService.ProviderName;
 
         intake.AuditLogs.Add(new AuditLog
         {
@@ -419,8 +420,8 @@ public sealed class IntakeWorkflowService(
             Actor = actor,
             Timestamp = DateTime.UtcNow,
             Details = requiresReview
-                ? "Mock AI summary generated and intake routed to human review."
-                : "Mock AI summary generated for routine human review."
+                ? $"{providerName} AI summary generated and intake routed to human review."
+                : $"{providerName} AI summary generated for routine human review."
         });
 
         await db.SaveChangesAsync(cancellationToken);

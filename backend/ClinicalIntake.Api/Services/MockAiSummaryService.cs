@@ -25,6 +25,8 @@ public sealed class MockAiSummaryService : IAiSummaryService
         "severe"
     ];
 
+    public string ProviderName => AiSummaryProviderNames.Mock;
+
     public AiSummaryResult Generate(Intake intake)
     {
         var sourceSegments = BuildSourceSegments(intake);

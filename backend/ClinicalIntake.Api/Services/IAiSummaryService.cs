@@ -6,5 +6,7 @@ public sealed record AiSummaryResult(AiSummary Summary, IReadOnlyList<RiskFlag> 
 
 public interface IAiSummaryService
 {
+    string ProviderName { get; }
+
     AiSummaryResult Generate(Intake intake);
 }

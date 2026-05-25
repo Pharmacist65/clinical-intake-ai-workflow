@@ -23,12 +23,14 @@ This roadmap keeps the project progression deliberate. The goal is to make the a
 - Mock document/OCR text ingestion endpoint and UI using pasted fictional document text
 - FHIR-style fictional export endpoint and UI preview for interoperability discussion
 - Production deployment design document covering migrations, secrets, authentication, monitoring and safety governance
+- Mock-first AI provider boundary with configuration for future provider selection
 
 ## Next Build Sequence
 
-1. Optional AI adapters
-   - Add environment-variable-based adapters later.
+1. Optional external AI adapter implementation
+   - Add concrete provider adapters later, behind `IAiSummaryService`.
    - Keep mock mode as the default so the project runs without API keys.
+   - Require explicit configuration before any external provider is used.
 
 2. Optional speech-to-text adapter concept
    - Keep the implemented transcript path text-only by default.

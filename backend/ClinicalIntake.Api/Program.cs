@@ -32,7 +32,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString);
 });
 
-builder.Services.AddScoped<IAiSummaryService, MockAiSummaryService>();
+builder.Services.AddAiSummaryProvider(builder.Configuration);
 builder.Services.AddScoped<MedicationContextService>();
 builder.Services.AddScoped<IntakeWorkflowService>();
 
@@ -135,7 +135,7 @@ app.MapPost("/api/intakes/{id:int}/generate-summary", async (
     IntakeWorkflowService workflow,
     CancellationToken cancellationToken) =>
 {
-    var intake = await workflow.GenerateSummaryAsync(id, "MockAiSummaryService", cancellationToken);
+    var intake = await workflow.GenerateSummaryAsync(id, "AiSummaryProvider", cancellationToken);
     return intake is null
         ? ApiErrors.NotFound("Intake")
         : Results.Ok(IntakeMapper.ToDetail(intake));
