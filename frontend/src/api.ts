@@ -76,7 +76,7 @@ export const api = {
   analyseMedicationContext: (id: number) =>
     request<IntakeDetail>(`/api/intakes/${id}/analyse-medication-context`, {
       method: "POST"
-  }),
+    }),
   listMedicationSignals: (id: number) => request<MedicationSignal[]>(`/api/intakes/${id}/medication-signals`),
   getMedicationDocumentationQuality: (id: number) =>
     request<MedicationDocumentationQuality>(`/api/intakes/${id}/medication-documentation-quality`),

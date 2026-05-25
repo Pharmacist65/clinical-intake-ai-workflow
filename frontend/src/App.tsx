@@ -156,7 +156,7 @@ export default function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div>
-          <p className="eyebrow">Clinical AI workflow demo</p>
+          <p className="eyebrow">Clinical intake workflow demo</p>
           <h1>Intake Review</h1>
         </div>
         <nav aria-label="Primary navigation">
@@ -248,6 +248,7 @@ function CreateIntake() {
   return (
     <section className="page-section">
       <PageHeader title="Create Intake" subtitle="Record a fictional intake note for mock AI workflow support." />
+      <p className="muted">Fictional demo data only. Do not enter real patient data.</p>
       {error && <p className="alert">{error}</p>}
       <form className="form-panel" onSubmit={handleSubmit}>
         <div className="form-grid">

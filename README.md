@@ -601,8 +601,8 @@ Generated summaries always include:
 
 Planned improvements, not currently implemented:
 
-- Real LLM integration via API with an environment-variable based adapter
-- Retrieval-augmented generation over approved clinical policy documents
+- Optional external AI summary adapter behind the existing provider boundary, disabled by default
+- Optional retrieval over approved non-patient policy examples for reviewer-facing context, without treatment recommendations
 - Real FHIR/HL7 adapter prototypes using fictional example payloads
 - Optional OCR/document extraction adapter for fictional or approved non-patient documents only
 - Optional speech-to-text adapter for fictional or approved non-patient transcripts only

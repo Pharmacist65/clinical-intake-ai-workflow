@@ -72,8 +72,8 @@ SQLite and `EnsureCreated` keep setup simple. I added Docker Compose as a local 
 
 The next improvements I would discuss are:
 
-- Add an optional OpenAI adapter behind an interface while keeping mock mode as the default.
-- Add RAG over local clinical policy documents so generated suggestions are grounded in approved guidance.
+- Implement a concrete external AI adapter behind the existing provider boundary while keeping mock mode as the default.
+- Consider retrieval over approved non-patient policy examples for reviewer-facing context, without treatment recommendations.
 - Consider an optional speech-to-text adapter later, disabled by default and never required for the local demo.
 - Consider an optional OCR/document extraction adapter later, disabled by default and never required for the local demo.
 - Add role-based access control for reviewers and administrators.

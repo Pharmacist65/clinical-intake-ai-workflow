@@ -53,6 +53,8 @@ Example production settings should include:
 - `ASPNETCORE_ENVIRONMENT=Production`
 - `ApiDocs__Enabled=false`
 - `DemoData__SeedOnStartup=false`
+- `AiSummary__Provider=Mock`
+- `AiSummary__ExternalProvidersEnabled=false`
 - `ConnectionStrings__DefaultConnection=<managed database connection>`
 - frontend `VITE_API_BASE_URL=<production API URL>`
 
