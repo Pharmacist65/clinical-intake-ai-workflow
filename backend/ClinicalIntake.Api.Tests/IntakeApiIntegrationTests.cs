@@ -33,6 +33,29 @@ public sealed class IntakeApiIntegrationTests : IClassFixture<ClinicalIntakeApiF
     }
 
     [Fact]
+    public async Task SystemCapabilities_ExposeMockFirstSafetyBoundary()
+    {
+        var response = await _client.GetAsync("/api/system/capabilities");
+
+        response.EnsureSuccessStatusCode();
+        var capabilities = await response.Content.ReadFromJsonAsync<SystemCapabilitiesResponse>();
+
+        Assert.NotNull(capabilities);
+        Assert.Equal("FictionalWorkflowDemo", capabilities.ApplicationMode);
+        Assert.Equal("Mock", capabilities.AiProvider);
+        Assert.False(capabilities.ExternalProvidersEnabled);
+        Assert.False(capabilities.RealPatientDataPermitted);
+        Assert.False(capabilities.DiagnosisEnabled);
+        Assert.False(capabilities.PrescribingEnabled);
+        Assert.False(capabilities.AutonomousTriageEnabled);
+        Assert.False(capabilities.LiveIntegrationsEnabled);
+        Assert.False(capabilities.ClinicalValidationCompleted);
+        Assert.False(capabilities.WorkflowRehearsalClinicalMeaning);
+        Assert.Contains("UK governance review prompts", capabilities.JurisdictionLenses);
+        Assert.Contains("not regulatory clearance", capabilities.Disclaimer, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task CreateAndGetIntake_ReturnsPersistedIntake()
     {
         var createResponse = await _client.PostAsJsonAsync("/api/intakes", new CreateIntakeRequest(

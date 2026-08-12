@@ -2,7 +2,7 @@
 
 This document describes what would need to change before this small MVP could be considered for a production healthcare environment.
 
-The current repository is not a production deployment. It is a local, fictional-data workflow application for exploring safe clinical intake automation.
+The current repository is not a production deployment. It is a local, fictional-data workflow application for exploring constrained clinical intake automation.
 
 ## Deployment Position
 

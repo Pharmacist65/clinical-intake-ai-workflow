@@ -140,4 +140,4 @@ For example:
 - keep any integration examples synthetic and clearly labelled as non-production
 - avoid adding live EHR connectivity until governance and data protection requirements are understood
 
-That would demonstrate interoperability thinking while keeping the project safe, readable, and runnable without external systems.
+That would demonstrate interoperability thinking while keeping the project inside documented boundaries, readable, and runnable without external systems.

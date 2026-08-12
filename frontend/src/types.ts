@@ -198,3 +198,18 @@ export interface FhirStyleExport {
   provenance: Record<string, unknown>[];
   auditEvents: Record<string, unknown>[];
 }
+
+export interface SystemCapabilities {
+  applicationMode: "FictionalWorkflowDemo";
+  aiProvider: string;
+  externalProvidersEnabled: boolean;
+  realPatientDataPermitted: boolean;
+  diagnosisEnabled: boolean;
+  prescribingEnabled: boolean;
+  autonomousTriageEnabled: boolean;
+  liveIntegrationsEnabled: boolean;
+  clinicalValidationCompleted: boolean;
+  workflowRehearsalClinicalMeaning: boolean;
+  jurisdictionLenses: string[];
+  disclaimer: string;
+}

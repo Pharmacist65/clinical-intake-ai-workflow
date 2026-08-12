@@ -54,5 +54,11 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Run frontend contract tests
+        run: npm test
+
       - name: Build frontend
         run: npm run build
+
+      - name: Build browser-only showcase
+        run: npm run build:demo

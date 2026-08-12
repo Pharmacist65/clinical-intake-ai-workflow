@@ -18,6 +18,8 @@ The safest first version of this idea is not a powerful model hidden behind an A
 - Shows confidence
 - Routes uncertain or high-risk cases to humans
 - Records important workflow actions
+- Exposes disabled capabilities through a machine-readable runtime manifest
+- Separates operational workflow rehearsal from any claim of clinical simulation or validation
 
 ## Explicit Non-Goals
 
@@ -32,6 +34,8 @@ The app does not:
 - Process real audio, perform speech-to-text, or identify speakers
 - Process real images, perform OCR, or parse real clinical documents
 - Implement live FHIR, HL7, NHS, EHR, or pharmacy-system integration
+- Claim UK or US regulatory compliance, certification or clinical validation
+- Use workflow rehearsal as evidence of diagnosis, triage, prescribing or patient-outcome performance
 
 ## Human-In-The-Loop Controls
 
@@ -76,6 +80,20 @@ Summary generation is wired through a mock-first provider boundary. The default 
 - `AiSummary:ExternalProvidersEnabled=false`
 
 Only the deterministic mock provider is registered. Configuring another provider name fails unless a future adapter is explicitly implemented and registered. This keeps the default demo free of API keys, hidden model behaviour, real patient-data transmission, and unreviewed external AI dependencies.
+
+## Capability Manifest
+
+`GET /api/system/capabilities` exposes the current build mode, provider name, external-provider state and explicit booleans for real patient data, diagnosis, prescribing, autonomous triage and live integrations. The frontend reads this contract rather than relying only on marketing copy.
+
+The manifest describes repository behaviour. It is not a regulatory determination, safety certification, compliance assessment or substitute for deployment controls.
+
+## Static Showcase Safety
+
+The GitHub Pages-compatible build uses only in-memory fictional records. It does not call the backend or an external model, and changes reset on reload. It is useful for public inspection but has no authentication, durable storage or production security controls. It must never be used as a real clinical service.
+
+## Workflow Rehearsal Boundary
+
+Workflow Rehearsal tests deterministic operational state transitions such as provenance gates and human-review handoffs. Every scenario is scoped with `clinicalMeaning=false` and `clinicalValidityAssessed=false`. A successful run demonstrates software behaviour only.
 
 ## Risk Flag Rules
 

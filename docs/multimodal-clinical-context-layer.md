@@ -68,7 +68,7 @@ The current MVP exposes:
 - `POST /api/intakes/{id}/transcript-context`
 - `POST /api/intakes/{id}/document-context`
 
-These endpoints store and list fictional text context only. The transcript endpoint is a safe stand-in for future voice workflows: it accepts pasted text, stores it as `TranscriptText`, and records an audit log entry. The document endpoint is a safe stand-in for future OCR/document workflows: it accepts pasted text, stores it as `DocumentText`, and records an audit log entry. The application does not run transcription, OCR, speaker identification, clinical image interpretation, LLM extraction, or autonomous triage.
+These endpoints store and list fictional text context only. The transcript endpoint is a bounded stand-in for future voice workflows: it accepts pasted text, stores it as `TranscriptText`, and records an audit log entry. The document endpoint is a bounded stand-in for future OCR/document workflows: it accepts pasted text, stores it as `DocumentText`, and records an audit log entry. The application does not run transcription, OCR, speaker identification, clinical image interpretation, LLM extraction, or autonomous triage.
 
 ## Evidence-Linked Review Signals
 
@@ -121,7 +121,7 @@ Safety should come from:
 
 1. Extend the fictional evaluation dataset with more context-event scenarios.
 2. Add optional adapters for transcription, OCR or LLM extraction only after the mock workflow is stable.
-3. Keep all adapters disabled by default and preserve mock text mode as the safe local path.
+3. Keep all adapters disabled by default and preserve mock text mode as the constrained local path.
 4. Document production safety, privacy, authentication and monitoring requirements separately.
 
 Each step should keep fictional data, human review and auditability as default design constraints.

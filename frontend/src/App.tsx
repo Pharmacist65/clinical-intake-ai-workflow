@@ -1,5 +1,26 @@
-import { FormEvent, useEffect, useMemo, useState, type ReactNode } from "react";
-import { api } from "./api";
+import { FormEvent, Suspense, lazy, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  Activity,
+  BadgeCheck,
+  Braces,
+  Check,
+  ClipboardList,
+  ExternalLink,
+  FilePlus2,
+  FileText,
+  FlaskConical,
+  GitFork,
+  LayoutDashboard,
+  ListChecks,
+  Pill,
+  Plus,
+  Scale,
+  SearchCheck,
+  ShieldCheck,
+  Sparkles,
+  Workflow
+} from "lucide-react";
+import { api, isStaticDemo } from "./api";
 import type {
   ContextEvent,
   ContextSourceType,
@@ -17,13 +38,26 @@ import type {
   MedicationSource,
   MedicationSignal,
   ReviewQueueItem,
-  RiskSeverity
+  RiskSeverity,
+  SystemCapabilities
 } from "./types";
+
+const GovernancePage = lazy(() =>
+  import("./ProductPages").then((module) => ({ default: module.GovernancePage }))
+);
+const WorkflowRehearsalPage = lazy(() =>
+  import("./ProductPages").then((module) => ({ default: module.WorkflowRehearsalPage }))
+);
+const WorkflowScene = lazy(() =>
+  import("./WorkflowScene").then((module) => ({ default: module.WorkflowScene }))
+);
 
 type Route =
   | { name: "dashboard" }
   | { name: "create" }
   | { name: "queue" }
+  | { name: "governance" }
+  | { name: "rehearsal" }
   | { name: "detail"; id: number };
 
 const initialForm: CreateIntakePayload = {
@@ -132,6 +166,14 @@ function parseRoute(): Route {
     return { name: "queue" };
   }
 
+  if (first === "governance") {
+    return { name: "governance" };
+  }
+
+  if (first === "rehearsal") {
+    return { name: "rehearsal" };
+  }
+
   if (first === "intakes" && Number(second)) {
     return { name: "detail", id: Number(second) };
   }
@@ -145,6 +187,7 @@ function navigate(path: string) {
 
 export default function App() {
   const [route, setRoute] = useState<Route>(parseRoute());
+  const [capabilities, setCapabilities] = useState<SystemCapabilities | null>(null);
 
   useEffect(() => {
     const handleHashChange = () => setRoute(parseRoute());
@@ -152,37 +195,70 @@ export default function App() {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
+  useEffect(() => {
+    api.getSystemCapabilities().then(setCapabilities).catch(() => setCapabilities(null));
+  }, []);
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div>
-          <p className="eyebrow">Clinical intake workflow demo</p>
-          <h1>Intake Review</h1>
+        <div className="brand-lockup">
+          <span className="brand-mark" aria-hidden="true"><Workflow size={22} /></span>
+          <div>
+            <p className="eyebrow">Clinical intake</p>
+            <h1>Evidence Review</h1>
+          </div>
         </div>
+        <div className="build-badge"><span aria-hidden="true" /> {isStaticDemo ? "Static showcase" : "Local full stack"}</div>
         <nav aria-label="Primary navigation">
-          <button className={route.name === "dashboard" ? "active" : ""} onClick={() => navigate("/")}>
-            Dashboard
+          <button aria-current={route.name === "dashboard" ? "page" : undefined} className={route.name === "dashboard" ? "active" : ""} onClick={() => navigate("/")}>
+            <LayoutDashboard size={18} /> Dashboard
           </button>
-          <button className={route.name === "create" ? "active" : ""} onClick={() => navigate("/create")}>
-            Create Intake
+          <button aria-current={route.name === "create" ? "page" : undefined} className={route.name === "create" ? "active" : ""} onClick={() => navigate("/create")}>
+            <FilePlus2 size={18} /> Create intake
           </button>
-          <button className={route.name === "queue" ? "active" : ""} onClick={() => navigate("/queue")}>
-            Review Queue
+          <button aria-current={route.name === "queue" ? "page" : undefined} className={route.name === "queue" ? "active" : ""} onClick={() => navigate("/queue")}>
+            <ListChecks size={18} /> Review queue
+          </button>
+          <span className="nav-section-label">Assurance</span>
+          <button aria-current={route.name === "governance" ? "page" : undefined} className={route.name === "governance" ? "active" : ""} onClick={() => navigate("/governance")}>
+            <Scale size={18} /> UK / US lens
+          </button>
+          <button aria-current={route.name === "rehearsal" ? "page" : undefined} className={route.name === "rehearsal" ? "active" : ""} onClick={() => navigate("/rehearsal")}>
+            <FlaskConical size={18} /> Rehearsal
           </button>
         </nav>
+        <div className="sidebar-boundary">
+          <ShieldCheck size={17} />
+          <p>Fictional data. Mock AI. Human review required.</p>
+        </div>
+        <a className="repo-link" href="https://github.com/Pharmacist65/clinical-intake-ai-workflow" target="_blank" rel="noreferrer">
+          <GitFork size={17} /> Public repository <ExternalLink size={14} />
+        </a>
       </aside>
 
       <main className="content">
-        {route.name === "dashboard" && <Dashboard />}
+        <div className="mode-strip" role="status">
+          <span><BadgeCheck size={15} /> {capabilities?.aiProvider ?? "Mock"} provider</span>
+          <span><Activity size={15} /> no live integrations</span>
+          <span><ShieldCheck size={15} /> no real patient data</span>
+        </div>
+        {route.name === "dashboard" && <Dashboard capabilities={capabilities} />}
         {route.name === "create" && <CreateIntake />}
         {route.name === "queue" && <ReviewQueue />}
+        {route.name === "governance" && (
+          <Suspense fallback={<ViewLoader />}><GovernancePage capabilities={capabilities} /></Suspense>
+        )}
+        {route.name === "rehearsal" && (
+          <Suspense fallback={<ViewLoader />}><WorkflowRehearsalPage /></Suspense>
+        )}
         {route.name === "detail" && <IntakeDetailPage intakeId={route.id} />}
       </main>
     </div>
   );
 }
 
-function Dashboard() {
+function Dashboard({ capabilities }: { capabilities: SystemCapabilities | null }) {
   const [intakes, setIntakes] = useState<IntakeListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -197,6 +273,7 @@ function Dashboard() {
 
   const counts = useMemo(
     () => ({
+      total: intakes.length,
       newCount: intakes.filter((intake) => intake.reviewStatus === "New").length,
       needsReview: intakes.filter((intake) => intake.reviewStatus === "NeedsReview").length,
       reviewed: intakes.filter((intake) => intake.reviewStatus === "Reviewed").length
@@ -207,18 +284,55 @@ function Dashboard() {
   return (
     <section className="page-section">
       <PageHeader
-        title="Dashboard"
-        subtitle="A lightweight view of intake volume and human review state."
-        action={<button onClick={() => navigate("/create")}>New intake</button>}
+        eyebrow="Operational workspace"
+        title="Evidence-linked intake review"
+        subtitle="Source context, deterministic workflow signals and human review state in one traceable path."
+        action={<button onClick={() => navigate("/create")}><Plus size={17} /> New intake</button>}
       />
       <StatusMessage loading={loading} error={error} />
+      {!loading && !error && (
+        <Suspense fallback={<div className="workflow-scene-loader">Loading workflow view...</div>}>
+          <WorkflowScene />
+        </Suspense>
+      )}
       <div className="metric-grid">
-        <Metric label="New intakes" value={counts.newCount} />
-        <Metric label="Needs review" value={counts.needsReview} tone="amber" />
-        <Metric label="Reviewed" value={counts.reviewed} tone="green" />
+        <Metric label="Fictional intakes" value={counts.total} icon={<ClipboardList size={18} />} />
+        <Metric label="New" value={counts.newCount} icon={<FileText size={18} />} tone="blue" />
+        <Metric label="Needs human review" value={counts.needsReview} icon={<ListChecks size={18} />} tone="amber" />
+        <Metric label="Reviewed" value={counts.reviewed} icon={<Check size={18} />} tone="green" />
+      </div>
+      <div className="dashboard-split">
+        <article className="panel status-distribution">
+          <div className="panel-title-row">
+            <Activity size={19} aria-hidden="true" />
+            <h2>Workflow state distribution</h2>
+          </div>
+          <StatusBar label="New" value={counts.newCount} total={counts.total} tone="blue" />
+          <StatusBar label="Needs human review" value={counts.needsReview} total={counts.total} tone="amber" />
+          <StatusBar label="Reviewed" value={counts.reviewed} total={counts.total} tone="green" />
+          <p className="chart-note">Counts reflect the current fictional dataset, not clinical performance.</p>
+        </article>
+        <article className="panel integrity-panel">
+          <div className="panel-title-row">
+            <ShieldCheck size={19} aria-hidden="true" />
+            <h2>Runtime boundaries</h2>
+          </div>
+          <div className="integrity-list">
+            <p><span>Summary provider</span><strong>{capabilities?.aiProvider ?? "Mock"}</strong></p>
+            <p><span>External calls</span><strong>disabled</strong></p>
+            <p><span>Clinical decisions</span><strong>human only</strong></p>
+            <p><span>Data mode</span><strong>fictional</strong></p>
+          </div>
+          <button className="text-link-button" onClick={() => navigate("/governance")}>
+            Inspect UK / US review lenses <ExternalLink size={15} />
+          </button>
+        </article>
       </div>
       <div className="panel">
-        <h2>Recent intakes</h2>
+        <div className="panel-title-row table-heading">
+          <ClipboardList size={19} aria-hidden="true" />
+          <h2>Recent fictional intakes</h2>
+        </div>
         <IntakeTable intakes={intakes.slice(0, 8)} />
       </div>
     </section>
@@ -248,7 +362,10 @@ function CreateIntake() {
   return (
     <section className="page-section">
       <PageHeader title="Create Intake" subtitle="Record a fictional intake note for mock AI workflow support." />
-      <p className="muted">Fictional demo data only. Do not enter real patient data.</p>
+      <p className="safety-notice">
+        <ShieldCheck size={17} />
+        <span>Fictional demo data only. Do not enter real patient data.{isStaticDemo ? " Browser-demo changes reset when the page reloads." : ""}</span>
+      </p>
       {error && <p className="alert">{error}</p>}
       <form className="form-panel" onSubmit={handleSubmit}>
         <div className="form-grid">
@@ -301,7 +418,7 @@ function CreateIntake() {
         </label>
         <div className="form-actions">
           <button type="submit" disabled={saving}>
-            {saving ? "Saving..." : "Create intake"}
+            <FilePlus2 size={17} /> {saving ? "Saving..." : "Create intake"}
           </button>
         </div>
       </form>
@@ -417,17 +534,17 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
 
       <div className="toolbar">
         <button disabled={busy} onClick={() => runAction(() => api.generateSummary(intake.id))}>
-          {intake.aiSummary ? "Regenerate summary" : "Generate summary"}
+          <Sparkles size={17} /> {intake.aiSummary ? "Regenerate summary" : "Generate summary"}
         </button>
         <button
           className="secondary"
           disabled={busy || intake.reviewStatus === "Reviewed"}
           onClick={markReviewed}
         >
-          Mark reviewed
+          <Check size={17} /> Mark reviewed
         </button>
         <button className="secondary" disabled={busy} onClick={loadFhirStyleExport}>
-          View FHIR-style export
+          <Braces size={17} /> View FHIR-style export
         </button>
       </div>
 
@@ -454,7 +571,11 @@ function IntakeDetailPage({ intakeId }: { intakeId: number }) {
         </article>
 
         <article className="panel">
-          <h2>AI-Style Summary</h2>
+          <div className="panel-title-row summary-heading">
+            <Sparkles size={18} aria-hidden="true" />
+            <h2>Mock structured summary</h2>
+            <span className="provider-chip">Mock provider</span>
+          </div>
           {intake.aiSummary ? (
             <div className="summary-list">
               <SummaryRow title="Presenting concerns" body={intake.aiSummary.presentingConcerns} />
@@ -631,7 +752,7 @@ function ContextEventsSection({
           </label>
           <div className="form-actions">
             <button type="submit" disabled={busy}>
-              Add mock transcript
+              <Plus size={17} /> Add mock transcript
             </button>
           </div>
         </form>
@@ -707,7 +828,7 @@ function ContextEventsSection({
           </label>
           <div className="form-actions">
             <button type="submit" disabled={busy}>
-              Add mock document text
+              <Plus size={17} /> Add mock document text
             </button>
           </div>
         </form>
@@ -787,7 +908,7 @@ function ContextEventsSection({
         </label>
         <div className="form-actions">
           <button type="submit" disabled={busy}>
-            Add context source
+            <Plus size={17} /> Add context source
           </button>
         </div>
       </form>
@@ -855,7 +976,7 @@ function MedicationContextSection({
           <p>Medication signals are workflow support only and must be reviewed by a clinician or pharmacist.</p>
         </div>
         <button disabled={busy} onClick={() => runAction(() => api.analyseMedicationContext(intake.id))}>
-          Analyse medication context
+          <SearchCheck size={17} /> Analyse medication context
         </button>
       </div>
 
@@ -950,7 +1071,7 @@ function MedicationContextSection({
         </label>
         <div className="form-actions">
           <button type="submit" disabled={busy}>
-            Add medication
+            <Pill size={17} /> Add medication
           </button>
         </div>
       </form>
@@ -1065,10 +1186,12 @@ function FhirStyleExportPanel({ exportData }: { exportData: FhirStyleExport }) {
 }
 
 function PageHeader({
+  eyebrow,
   title,
   subtitle,
   action
 }: {
+  eyebrow?: string;
   title: string;
   subtitle: string;
   action?: ReactNode;
@@ -1076,6 +1199,7 @@ function PageHeader({
   return (
     <header className="page-header">
       <div>
+        {eyebrow && <p className="eyebrow dark">{eyebrow}</p>}
         <h2>{title}</h2>
         <p>{subtitle}</p>
       </div>
@@ -1096,11 +1220,37 @@ function StatusMessage({ loading, error }: { loading: boolean; error: string | n
   return null;
 }
 
-function Metric({ label, value, tone }: { label: string; value: number; tone?: "amber" | "green" }) {
+function ViewLoader() {
+  return <div className="view-loader">Loading view...</div>;
+}
+
+function Metric({
+  label,
+  value,
+  icon,
+  tone
+}: {
+  label: string;
+  value: number;
+  icon: ReactNode;
+  tone?: "blue" | "amber" | "green";
+}) {
   return (
     <div className={`metric ${tone ?? ""}`}>
-      <span>{label}</span>
+      <span className="metric-label">{icon}{label}</span>
       <strong>{value}</strong>
+    </div>
+  );
+}
+
+function StatusBar({ label, value, total, tone }: { label: string; value: number; total: number; tone: "blue" | "amber" | "green" }) {
+  const percentage = total === 0 ? 0 : Math.round((value / total) * 100);
+  return (
+    <div className="status-bar-row">
+      <div><span>{label}</span><strong>{value}</strong></div>
+      <div className="status-track" aria-label={`${label}: ${value} of ${total}`}>
+        <span className={tone} style={{ width: `${percentage}%` }} />
+      </div>
     </div>
   );
 }
@@ -1251,7 +1401,7 @@ function toMedicationPayload(form: MedicationFormState): CreateMedicationPayload
 }
 
 function StatusBadge({ status }: { status: string }) {
-  return <span className={`status status-${status.toLowerCase()}`}>{status}</span>;
+  return <span className={`status status-${status.toLowerCase()}`}>{status === "NeedsReview" ? "Needs review" : status}</span>;
 }
 
 function SeverityBadge({ severity }: { severity: RiskSeverity }) {

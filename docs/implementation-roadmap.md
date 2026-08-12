@@ -24,25 +24,45 @@ This roadmap keeps the project progression deliberate. The goal is to make the a
 - FHIR-style fictional export endpoint and UI preview for interoperability discussion
 - Production deployment design document covering migrations, secrets, authentication, monitoring and safety governance
 - Mock-first AI provider boundary with configuration for future provider selection
+- Machine-readable system capability endpoint with integration coverage
+- Browser-only fictional demo adapter and tested GitHub Pages publication workflow
+- Browser-demo Vitest contract coverage for capability, queue and review lifecycle behaviour
+- Evidence-spine Three.js workflow visualisation with reduced-motion support
+- UK/US governance explorer backed by dated primary sources
+- Deterministic workflow rehearsal for provenance, handoff and documentation controls
+- Current UK/US clinical AI landscape and product-pattern review
 
 ## Next Build Sequence
 
-1. Optional external AI adapter implementation
-   - Add concrete provider adapters later, behind `IAiSummaryService`.
-   - Keep mock mode as the default so the project runs without API keys.
-   - Require explicit configuration before any external provider is used.
+1. Versioned workflow assurance fixtures
+   - Move rehearsal scenarios into validated JSON fixtures.
+   - Add schema versions, deterministic input hashes and expected/actual event-log checks.
+   - Keep `clinicalMeaning=false` unless a separate validation programme is completed.
 
-2. Optional speech-to-text adapter concept
+2. Failure-mode evaluation
+   - Add fictional provider timeout, malformed output, missing provenance and stale-review scenarios.
+   - Test fail-closed behaviour, operator messaging and audit evidence.
+
+3. Human-factors review with fictional data
+   - Define representative tasks and correction workflows.
+   - Measure provenance retrieval, omission discovery and reviewer effort without clinical-performance claims.
+
+4. Optional speech-to-text adapter concept
    - Keep the implemented transcript path text-only by default.
    - Document any future adapter as disabled unless explicitly configured.
 
-3. Optional OCR/document extraction adapter concept
+5. Optional OCR/document extraction adapter concept
    - Keep the implemented document path pasted-text-only by default.
    - Document any future adapter as disabled unless explicitly configured.
 
-4. Real interoperability adapter concept
+6. Real interoperability adapter concept
    - Keep the implemented export fictional and local.
    - Document any future FHIR/HL7 adapter as a separate integration boundary.
 
-5. Production hardening implementation
+7. Optional external AI adapter implementation
+   - Add a concrete provider only behind `IAiSummaryService` and a versioned output contract.
+   - Keep mock mode as the default and require explicit configuration.
+   - Add redaction, data-flow, timeout, malformed-output and provider-observability controls first.
+
+8. Production hardening implementation
    - Add authentication, migrations, monitoring and deployment infrastructure only after requirements are known.

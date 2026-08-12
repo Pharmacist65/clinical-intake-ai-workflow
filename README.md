@@ -2,9 +2,27 @@
 
 [![CI](https://github.com/Pharmacist65/clinical-intake-ai-workflow/actions/workflows/ci.yml/badge.svg)](https://github.com/Pharmacist65/clinical-intake-ai-workflow/actions/workflows/ci.yml)
 
-A small full-stack healthtech application that models a safe clinical intake workflow: capturing fictional intake notes, generating deterministic AI-style workflow summaries, flagging possible priority terms, routing cases for human review, and preserving an audit trail.
+**Live browser demo:** [pharmacist65.github.io/clinical-intake-ai-workflow](https://pharmacist65.github.io/clinical-intake-ai-workflow/)
 
-The project is intentionally scoped as a small MVP for exploring safe clinical workflow automation. It does not diagnose, prescribe, triage autonomously, or replace clinicians. It uses mock AI logic so the workflow can run locally without API keys, real patient data, or hidden model behaviour.
+A full-stack healthtech reference implementation for evidence-linked clinical intake review: it captures fictional source material, generates deterministic AI-style workflow summaries, links rule-based prompts back to evidence, routes cases for human review, and preserves an audit trail.
+
+The project is intentionally not positioned as another ambient scribe. Its focus is the inspectable path between source context, generated workflow support, human release state and audit evidence. A current UK/US governance explorer and a secondary deterministic workflow-rehearsal surface make implementation questions visible without claiming compliance or clinical validation.
+
+It does not diagnose, prescribe, triage autonomously, or replace clinicians. The default and only implemented AI provider is deterministic `Mock`, so the workflow runs without API keys, real patient data, hidden model behaviour or external AI calls.
+
+## Current Product Direction
+
+The differentiating concept is an **evidence spine** rather than a more powerful note generator:
+
+- original fictional source material remains visible;
+- deterministic prompts retain source labels and short evidence snippets;
+- runtime capability boundaries are machine-readable and tested;
+- UK and US implementation questions are sourced and separated;
+- human review is an explicit release state;
+- workflow rehearsal tests operational controls with `clinicalMeaning=false`;
+- a browser-only showcase can be reviewed without a backend or persistent data.
+
+See [docs/uk-us-clinical-ai-landscape-2026.md](docs/uk-us-clinical-ai-landscape-2026.md) for the dated evidence review and product-pattern synthesis.
 
 ## Project Scope
 
@@ -21,6 +39,9 @@ This application focuses on that workflow:
 - human review queue
 - review status updates
 - audit logs
+- machine-readable capability boundaries
+- UK/US implementation review prompts
+- deterministic operational workflow rehearsal
 
 ## What This Project Demonstrates
 
@@ -28,17 +49,21 @@ This application focuses on that workflow:
 - Healthtech product thinking: human review is central, original notes remain visible, and limitations are explicit
 - C# ASP.NET Core backend fundamentals: minimal API endpoints, validation, service-layer workflow logic, Swagger/OpenAPI documentation, and consistent error responses
 - React + TypeScript frontend: dashboard, intake creation, detail view, summary generation, and review queue UI
+- Purposeful Three.js workflow visualisation: an unframed evidence-spine scene represents source-to-audit stages without encoding clinical meaning
+- Dual frontend runtime: full-stack API mode and an in-memory browser-only showcase using the same typed API contract
 - Database-backed workflow: SQLite with Entity Framework Core models for intakes, summaries, risk flags, and audit logs
 - Pharmacy context layer: medication-history capture, documentation quality checks, pharmacist-review signals, and medication timeline
 - Context source provenance: fictional text-derived context sources, including mock transcript and document text, can be stored with source type, label, author, timing, confidence, and audit history
 - Evidence-linked review signals: risk flags and medication signals include short source snippets when deterministic rules are triggered
 - Interoperability thinking: a FHIR-style fictional export maps intake, medication context, provenance, task state, and audit events without connecting to external systems
 - Production awareness: deployment requirements are documented separately from the local Docker setup, including migrations, secrets, auth, monitoring, and safety governance
-- Safe applied AI design: deterministic mock AI, no API keys required, confidence scoring, disclaimers, and constrained output
+- Constrained applied AI design: deterministic mock AI, no API keys required, confidence scoring, disclaimers, and bounded output
 - Human-in-the-loop review: high-risk or low-confidence cases are routed to `NeedsReview`
 - Auditability: intake creation, summary generation, medication context analysis, review notes, and review status updates are recorded
 - Evaluation discipline: fictional dataset-driven tests check expected routing, risk flags, medication signals, and documentation-quality status
-- Future-safe architecture thinking: implemented text-source provenance, mock transcript ingestion and mock document-text ingestion plus documented interoperability and multimodal concepts without claiming live EHR, audio, OCR, image or LLM capability
+- Future-facing architecture thinking: implemented text-source provenance, mock transcript ingestion and mock document-text ingestion plus documented interoperability and multimodal concepts without claiming live EHR, audio, OCR, image or LLM capability
+- Cross-jurisdiction implementation thinking: dated UK and US source review is translated into governance prompts without presenting a compliance verdict
+- Reproducible assurance direction: deterministic rehearsal events, replay identifiers and debriefs test workflow gates rather than clinical decisions
 
 ## Product Summary
 
@@ -55,6 +80,8 @@ The app lets a care team user:
 9. Mark cases as reviewed with an optional workflow review note.
 10. Inspect the audit log for key workflow actions.
 11. View a FHIR-style fictional export for interoperability discussion.
+12. Compare UK and US implementation-review lenses with links to primary sources.
+13. Rehearse deterministic provenance, confidence-handoff and medication-documentation controls.
 
 ## Screenshots
 
@@ -64,21 +91,60 @@ The screenshots below use fictional demo data only.
 
 ![Dashboard showing intake counts and recent fictional intakes](docs/screenshots/dashboard.png)
 
+### UK/US Governance Explorer
+
+![UK governance lens showing sourced implementation prompts and explicit boundaries](docs/screenshots/governance.png)
+
+### Workflow Rehearsal
+
+![Completed deterministic provenance-gate rehearsal with event timeline and non-clinical debrief](docs/screenshots/workflow-rehearsal.png)
+
 ### Intake Detail
 
-![Intake detail showing the original note, AI-style summary, medication context, review signals and audit log](docs/screenshots/intake-detail.png)
+![Intake detail showing original fictional text beside a mock structured summary and human review controls](docs/screenshots/intake-detail.png)
 
 ### Review Queue
 
 ![Review queue showing a fictional case routed for human review](docs/screenshots/review-queue.png)
+
+## Browser-Only Showcase
+
+The frontend can be built as a self-contained HTML/JavaScript showcase. It uses an in-memory implementation of the same typed API contract, preloads fictional cases, and resets all changes on reload. It makes no backend or external AI request.
+
+```bash
+cd frontend
+npm ci
+npm run build:demo
+npm run preview:demo
+```
+
+Open `http://127.0.0.1:4173/clinical-intake-ai-workflow/`.
+
+The same browser-only build is published at the stable [GitHub Pages demo URL](https://pharmacist65.github.io/clinical-intake-ai-workflow/). Updates to the frontend on reviewed `main` commits run the demo tests, rebuild the static site and deploy to that address. See [docs/static-demo-and-github-pages.md](docs/static-demo-and-github-pages.md) for the runtime boundaries and publication checklist.
+
+## 2026 UK/US Evidence Review
+
+The product direction is informed by current NHS England, NHS clinical safety, MHRA, ICO, AMA, ASTP/ONC and FDA material plus recent peer-reviewed workflow studies. The review keeps reported deployment figures, study results and regulatory scope separate from claims about this repository.
+
+Key implications for the implementation are:
+
+- intended purpose must remain narrow and visible;
+- human verification and source traceability are release controls;
+- local workflow evaluation matters beyond model accuracy;
+- UK and US governance questions differ and should not be collapsed into a generic compliance badge;
+- simulation/rehearsal can test software controls but cannot establish clinical validity.
+
+See [docs/uk-us-clinical-ai-landscape-2026.md](docs/uk-us-clinical-ai-landscape-2026.md) and [docs/workflow-rehearsal-concept.md](docs/workflow-rehearsal-concept.md).
 
 ## Tech Stack
 
 - Backend: ASP.NET Core Web API, C#
 - Runtime target: .NET 8 LTS
 - Database: SQLite with Entity Framework Core
-- Tests: xUnit unit tests, API integration tests, and fictional dataset-driven workflow checks
+- Tests: xUnit unit/integration/dataset checks plus Vitest browser-demo contract tests
 - Frontend: React, TypeScript, Vite
+- Visual workflow layer: Three.js, loaded as a separate frontend chunk
+- UI icons: Lucide React
 - AI mode: deterministic mock service selected through a mock-first provider boundary, no real API key required
 - API docs: Swagger/OpenAPI at `/swagger`
 - CI: GitHub Actions runs backend tests and frontend build on push and pull request
@@ -88,8 +154,13 @@ The screenshots below use fictional demo data only.
 ```mermaid
 flowchart LR
     User["Care team user"] --> Frontend["React + TypeScript UI"]
+    Reviewer["Public demo reviewer"] --> Static["Browser-only fictional adapter"]
+    Static --> Frontend
     Frontend --> Api["ASP.NET Core API"]
+    Frontend --> Governance["UK / US review lenses"]
+    Frontend --> Rehearsal["Deterministic workflow rehearsal"]
     Api --> Validation["Request validation"]
+    Api --> Capabilities["Capability manifest"]
     Api --> Docs["Swagger/OpenAPI"]
     Api --> Workflow["IntakeWorkflowService"]
     Workflow --> MockAI["Mock AI summary provider"]
@@ -100,6 +171,8 @@ flowchart LR
 ```
 
 The backend keeps HTTP handling thin. Request validation lives in small validators, workflow transitions live in `IntakeWorkflowService`, response mapping lives in `IntakeMapper`, deterministic summary generation lives behind `IAiSummaryService` and a mock-first provider boundary, demo data is created by `DemoDataSeeder`, text context provenance is captured through `ContextEvent`, and medication review signals are generated by `MedicationContextService`.
+
+The frontend depends on a typed `ClinicalIntakeApi` contract. Normal mode calls the ASP.NET Core API; static `demo` mode swaps in an in-memory adapter with fictional cases. Both modes expose the same safety boundaries to the UI.
 
 ## Interoperability Concept
 
@@ -115,7 +188,7 @@ The repository includes a production deployment design document that explains wh
 
 See [docs/production-deployment-design.md](docs/production-deployment-design.md) for the proposed production shape, environment configuration, database migration expectations, authentication and RBAC, audit requirements, monitoring, data protection boundaries, release process, and readiness checklist.
 
-The current Docker Compose setup remains local-development-only. This project is not deployed or production hardened.
+The current Docker Compose setup remains local-development-only. Only the fictional, browser-only showcase is published; no backend, database or clinical service is deployed, and the project is not production hardened.
 
 ## Multimodal Clinical Context Concept
 
@@ -207,6 +280,7 @@ Unexpected failures return `500 Internal Server Error` with the same simple erro
 | Method | Endpoint | Success | Purpose |
 | --- | --- | --- | --- |
 | `GET` | `/api/health` | `200 OK` | Basic API health check |
+| `GET` | `/api/system/capabilities` | `200 OK` | Read provider mode and explicit safety/integration boundaries for this build |
 | `POST` | `/api/intakes` | `201 Created` | Create a new fictional intake |
 | `GET` | `/api/intakes` | `200 OK` | List intakes with status and highest risk |
 | `GET` | `/api/intakes/{id}` | `200 OK` | Get one intake with summary, flags, medication context, signals, and audit logs |
@@ -224,6 +298,14 @@ Unexpected failures return `500 Internal Server Error` with the same simple erro
 | `GET` | `/api/intakes/{id}/medication-signals` | `200 OK` | List medication review signals |
 | `GET` | `/api/intakes/{id}/medication-documentation-quality` | `200 OK` | Assess medication-history documentation completeness |
 | `GET` | `/api/intakes/{id}/fhir-style-export` | `200 OK` | Return a fictional FHIR-style interoperability example |
+
+### System Capabilities
+
+`GET /api/system/capabilities`
+
+Returns machine-readable runtime claims used by the frontend and integration tests. The current response declares `Mock` provider mode and reports real patient data, diagnosis, prescribing, autonomous triage, external providers and live integrations as disabled.
+
+The endpoint documents repository behaviour only. It is not regulatory clearance, clinical validation or a compliance assessment.
 
 ### Create Intake
 
@@ -332,7 +414,7 @@ Request:
 }
 ```
 
-This endpoint is a safe stand-in for future voice or transcript ingestion. It stores pasted fictional transcript text as a `ContextEvent` with `sourceType` set to `TranscriptText`, adds metadata that marks it as mock transcript input, and creates an audit log entry.
+This endpoint is a bounded stand-in for future voice or transcript ingestion. It stores pasted fictional transcript text as a `ContextEvent` with `sourceType` set to `TranscriptText`, adds metadata that marks it as mock transcript input, and creates an audit log entry.
 
 It does not process audio, run speech-to-text, identify speakers, diagnose, prescribe, recommend treatment, or make triage decisions.
 
@@ -354,7 +436,7 @@ Request:
 }
 ```
 
-This endpoint is a safe stand-in for future document or OCR ingestion. It stores pasted fictional document text as a `ContextEvent` with `sourceType` set to `DocumentText`, adds metadata that marks it as mock document/OCR input, and creates an audit log entry.
+This endpoint is a bounded stand-in for future document or OCR ingestion. It stores pasted fictional document text as a `ContextEvent` with `sourceType` set to `DocumentText`, adds metadata that marks it as mock document/OCR input, and creates an audit log entry.
 
 It does not process images, run OCR, parse real patient documents, diagnose, prescribe, recommend treatment, or make triage decisions.
 
@@ -569,6 +651,9 @@ The app is intentionally constrained:
 - It provides a FHIR-style fictional export only; it does not implement FHIR, HL7, NHS, EHR, or pharmacy-system integration.
 - It uses deterministic mock AI rules in this version.
 - It includes a confidence score and safety disclaimer.
+- It exposes the current build's provider and disabled capabilities through `/api/system/capabilities`.
+- Its UK/US governance page provides sourced review prompts only; it does not calculate compliance.
+- Its workflow rehearsal evaluates operational state transitions only and explicitly carries no clinical meaning.
 - It shows evidence snippets for generated review signals where a deterministic rule matched source text.
 - High-risk keywords route the case to human review.
 - Low-confidence summaries route the case to human review.
@@ -595,6 +680,9 @@ Generated summaries always include:
 - No authentication, role-based access control, or production security hardening is implemented.
 - SQLite and `EnsureCreated` are used for local development simplicity.
 - The application is not deployed or monitored as a production service.
+- The static showcase has no authentication or durable storage, resets on reload and must not be used as a clinical service.
+- The UK/US landscape review is dated research context, not legal, regulatory or clinical advice.
+- Workflow rehearsal does not establish clinical realism, correctness, safety or patient benefit.
 - Production deployment requirements are documented, not implemented.
 
 ## Future Improvements
@@ -610,6 +698,9 @@ Planned improvements, not currently implemented:
 - Production deployment implementation
 - Observability and monitoring
 - Larger synthetic evaluation dataset for workflow routing and summary behaviour
+- Versioned workflow-rehearsal fixtures with deterministic input and event-log hashes
+- Failure-mode scenarios for provider timeout, malformed output, stale review and missing provenance
+- Human-factors evaluation using fictional cases before any real-world consideration
 
 See [docs/implementation-roadmap.md](docs/implementation-roadmap.md) for the ordered build plan.
 
@@ -686,5 +777,11 @@ Frontend build check:
 ```bash
 cd frontend
 npm install
+npm test
 npm run build
+npm run build:demo
 ```
+
+## Contributing And Security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for scope guards and required checks. Report security issues using the private process in [SECURITY.md](SECURITY.md), and never include real patient data or credentials.

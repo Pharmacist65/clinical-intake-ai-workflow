@@ -12,10 +12,14 @@ import type {
   MedicationEntry,
   MedicationSignal,
   ReviewQueueItem,
-  ReviewStatus
+  ReviewStatus,
+  SystemCapabilities
 } from "./types";
+import type { ClinicalIntakeApi } from "./apiContract";
+import { createDemoApi } from "./demoApi";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5108";
+export const isStaticDemo = import.meta.env.MODE === "demo" || import.meta.env.VITE_DEMO_MODE === "true";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
@@ -39,7 +43,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export const api = {
+const remoteApi: ClinicalIntakeApi = {
+  getSystemCapabilities: () => request<SystemCapabilities>("/api/system/capabilities"),
   listIntakes: () => request<IntakeListItem[]>("/api/intakes"),
   getIntake: (id: number) => request<IntakeDetail>(`/api/intakes/${id}`),
   createIntake: (payload: CreateIntakePayload) =>
@@ -88,3 +93,5 @@ export const api = {
       body: JSON.stringify({ reviewStatus, actor, reviewNote: reviewNote?.trim() || null })
     })
 };
+
+export const api: ClinicalIntakeApi = isStaticDemo ? createDemoApi() : remoteApi;

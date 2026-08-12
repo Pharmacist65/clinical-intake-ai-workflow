@@ -90,6 +90,30 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }))
     .WithName("HealthCheck")
     .WithTags("System");
 
+app.MapGet("/api/system/capabilities", (IAiSummaryService aiSummaryService) =>
+{
+    // Capability metadata reports implemented behaviour, not configuration intent.
+    return Results.Ok(new SystemCapabilitiesResponse(
+        ApplicationMode: "FictionalWorkflowDemo",
+        AiProvider: aiSummaryService.ProviderName,
+        ExternalProvidersEnabled: false,
+        RealPatientDataPermitted: false,
+        DiagnosisEnabled: false,
+        PrescribingEnabled: false,
+        AutonomousTriageEnabled: false,
+        LiveIntegrationsEnabled: false,
+        ClinicalValidationCompleted: false,
+        WorkflowRehearsalClinicalMeaning: false,
+        JurisdictionLenses:
+        [
+            "UK governance review prompts",
+            "US governance review prompts"
+        ],
+        Disclaimer: "Capability metadata describes this repository build. It is not regulatory clearance, clinical validation, or a compliance assessment."));
+})
+    .WithName("GetSystemCapabilities")
+    .WithTags("System");
+
 app.MapPost("/api/intakes", async (
     CreateIntakeRequest request,
     IntakeWorkflowService workflow,
